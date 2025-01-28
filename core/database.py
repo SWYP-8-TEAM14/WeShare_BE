@@ -1,5 +1,6 @@
 from django.db.models import QuerySet
 
+
 class Repository:
     @staticmethod
     def get_objects(queryset: QuerySet, **filters):
