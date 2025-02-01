@@ -16,6 +16,11 @@ DJANGO_APPS = [
 
 THIRD_PARTY = [
     "rest_framework",
+    "psycopg2",
+    "drf-spectacular",
+    "python-decouple",
+    "djangorestframework",
+    "python-dotenv",
 ]
 
 OWN_APPS = [
