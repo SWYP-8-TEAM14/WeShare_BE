@@ -1,6 +1,7 @@
 from django.views.generic import RedirectView
 
 NAVER_CALLBACK_URL = "/auth/naver/callback/"
+NAVER_CALLBACK_URL = "/naver/callback/"
 NAVER_STATE = "naver_login"
 NAVER_LOGIN_URL = "https://nid.naver.com/oauth2.0/authorize"
 
@@ -9,4 +10,7 @@ class NaverLoginRedirectView(RedirectView):
     def get_redirect_url(self, args, **kwargs):
         domain = self.request.scheme + "://" + self.request.META.get("HTTP_HOST", "")
         callback_url = domain + NAVER_CALLBACK_URL
+<<<<<<< HEAD
         return callback_url
+=======
+>>>>>>> f95de1e (feat: feature/users 회원가입 model 수정 및 serializers.py 생성)
