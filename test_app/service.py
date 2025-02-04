@@ -1,11 +1,13 @@
 from .models import User
 
+
 def add_user(userid, username):
     """
     Adds a new user to the database.
     """
     user = User.objects.create(userid=userid, username=username)
     return user
+
 
 def update_user(userid, new_username):
     """
@@ -18,6 +20,7 @@ def update_user(userid, new_username):
         return user
     except User.DoesNotExist:
         return None
+
 
 def delete_user(userid):
     """
