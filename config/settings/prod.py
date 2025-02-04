@@ -1,7 +1,8 @@
-from config.settings.base import *
 from dotenv import dotenv_values
 
-ENV = dotenv_values('../../envs/.env.prod')
+from config.settings.base import *
+
+ENV = dotenv_values("../../envs/.env.prod")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = ENV.get("SECRET_KEY")
