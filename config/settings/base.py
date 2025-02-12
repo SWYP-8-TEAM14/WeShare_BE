@@ -16,7 +16,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY = [
     "rest_framework",
-    "drf-spectacular",
+    "drf_spectacular",
     "djangorestframework",
     "python-dotenv",
 ]
