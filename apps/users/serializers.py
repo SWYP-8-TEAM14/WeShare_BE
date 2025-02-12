@@ -1,12 +1,12 @@
 from rest_framework import serializers
-
+from django.contrib.auth import authenticate
 from .models import User
 
 
 class SignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["email", "nickname", "password", "name"]
+        fields = ["email", "password", "nickname", "name"]
         extra_kwargs = {
             "profile_image": {"required": False},
         }
@@ -19,3 +19,16 @@ class SocialSignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["email", "name"]
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        user = authenticate(email=data["email"], password=data["password"])
+        if not user:
+            raise serializers.ValidationError("이메일 또는 비밀번호가 올바르지 않습니다.")
+        return user
