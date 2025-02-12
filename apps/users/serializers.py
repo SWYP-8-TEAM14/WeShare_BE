@@ -1,14 +1,22 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer
 
 from .models import User
+
+
+class UserSerializer(ModelSerializer["User"]):
+    class Meta:
+        model = User
+        fields = ["id", "nickname", "email", "profile_image", "created_at", "updated_at"]
 
 
 class SignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["email", "password", "nickname", "name"]
+        fields = ["email", "password", "nickname", "profile_image"]
         extra_kwargs = {
+            "password": {"write_only": True},
             "profile_image": {"required": False},
         }
 
@@ -19,7 +27,7 @@ class SignupSerializer(serializers.ModelSerializer):
 class SocialSignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["email", "name"]
+        fields = ["email", "nickname"]
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)

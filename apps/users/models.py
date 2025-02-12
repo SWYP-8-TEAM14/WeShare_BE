@@ -1,9 +1,12 @@
+from typing import Optional
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from django.db.models import CharField, DateTimeField, IntegerField
 
 
-class UesrManager(BaseUserManager):
-    def create_user(self, email, password=None, **extra_fields):
+class UserManager(BaseUserManager["User"]):
+    def create_user(self, email, password: Optional[str] = None, **extra_fields: dict) -> "User":
         if not email:
             raise ValueError("이메일은 필수입니다.")
         user = self.model(email=self.normalize_email(email), **extra_fields)
@@ -19,15 +22,15 @@ class UesrManager(BaseUserManager):
 
 
 class BaseModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at: DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
         abstract = True
 
 
 class User(BaseModel, AbstractUser, PermissionsMixin):
-    provider_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    provider_id: CharField = models.CharField(max_length=255, null=True, blank=True, unique=True)
     provider = models.CharField(max_length=20, null=True, blank=True)
     group_admin_id = models.IntegerField(null=True, blank=True)
     email = models.EmailField(unique=True)
@@ -40,7 +43,7 @@ class User(BaseModel, AbstractUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 
-    objects = UesrManager()
+    objects = UserManager["User"] = UserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

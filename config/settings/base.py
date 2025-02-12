@@ -17,8 +17,7 @@ DJANGO_APPS = [
 THIRD_PARTY = [
     "rest_framework",
     "drf_spectacular",
-    "djangorestframework",
-    "python-dotenv",
+    "rest_framework_simplejwt",
 ]
 
 OWN_APPS = [
