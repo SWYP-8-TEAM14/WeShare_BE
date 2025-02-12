@@ -16,9 +16,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY = [
     "rest_framework",
-    "psycopg2",
     "drf-spectacular",
-    "python-decouple",
     "djangorestframework",
     "python-dotenv",
 ]
@@ -26,7 +24,6 @@ THIRD_PARTY = [
 OWN_APPS = [
     "apps.users",
     "apps.groups",
-    "test_app",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY + OWN_APPS
@@ -84,7 +81,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Seoul"
 
 USE_I18N = True
 
