@@ -51,6 +51,9 @@ class LoginSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError("이메일 또는 비밀번호가 올바르지 않습니다.")
         return user
+<<<<<<< HEAD
 =======
         fields = ["email", "name"]
 >>>>>>> f95de1e (feat: feature/users 회원가입 model 수정 및 serializers.py 생성)
+=======
+>>>>>>> a0349e3 (config/urls.py signup, login url 추가)
