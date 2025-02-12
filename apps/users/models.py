@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
 
@@ -26,7 +26,7 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class User(BaseModel, AbstractUser):
+class User(BaseModel, AbstractUser, PermissionsMixin):
     provider_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
     provider = models.CharField(max_length=20, null=True, blank=True)
     group_admin_id = models.IntegerField(null=True, blank=True)
