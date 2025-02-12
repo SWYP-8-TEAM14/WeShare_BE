@@ -1,5 +1,7 @@
 from django.contrib.auth import authenticate
+
 from apps.users.models import User
+
 
 class AuthService:
     @staticmethod
