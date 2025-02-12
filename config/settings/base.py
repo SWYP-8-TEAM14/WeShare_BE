@@ -16,17 +16,13 @@ DJANGO_APPS = [
 
 THIRD_PARTY = [
     "rest_framework",
-    "psycopg2",
-    "drf-spectacular",
-    "python-decouple",
-    "djangorestframework",
-    "python-dotenv",
+    "rest_framework_simplejwt",
+    "drf_spectacular",
 ]
 
 OWN_APPS = [
     "apps.users",
     "apps.groups",
-    "test_app",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY + OWN_APPS

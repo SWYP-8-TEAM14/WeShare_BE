@@ -1,10 +1,11 @@
-from config.settings.base import *
 from dotenv import dotenv_values
 
-ENV = dotenv_values(BASE_DIR / 'envs/.env.local')
+from config.settings.base import *
+
+ENV = dotenv_values(BASE_DIR / "envs/.env.local")
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ENV.get('SECRET_KEY')
+SECRET_KEY = ENV.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
