@@ -43,6 +43,22 @@ jobs:
           curl -sSL curl -sSL https://install.python-poetry.org | python3 -
           echo "${HOME}/.local/bin" >> $GITHUB_PATH
 
+      - name: Change to correct working directory
+        run: |
+          cd $GITHUB_WORKSPACE
+
+      - name: Debug workspace
+        run: |
+          echo "현재 경로:"
+          pwd
+          echo "현재 디렉토리 파일 목록:"
+          ls -l
+
+      - name: Install dependencies
+        working-directory: ${{ github.workspace }}
+        run: |
+          poetry install --no-root
+
       - name: Install dependencies
         run: |
           poetry install --no-root
