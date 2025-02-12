@@ -4,7 +4,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # sers
+    # users
     path("api/v1/users/", include("apps.users.urls")),
     # Swagger 및 API 문서
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

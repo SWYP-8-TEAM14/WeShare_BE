@@ -22,8 +22,8 @@ class UserManager(BaseUserManager["User"]):
         return self.create_user(email, password, **extra_fields)
 
 
-class UesrManager(BaseUserManager):
-    def create_user(self, email, password=None, **extra_fields):
+class UserManager(BaseUserManager["User"]):
+    def create_user(self, email, password: Optional[str] = None, **extra_fields: dict) -> "User":
         if not email:
             raise ValueError("이메일은 필수입니다.")
         user = self.model(email=self.normalize_email(email), **extra_fields)
@@ -45,14 +45,8 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-
-<<<<<<< HEAD
 class User(BaseModel, AbstractUser, PermissionsMixin):
-    provider_id: CharField = models.CharField(max_length=255, null=True, blank=True, unique=True)
-=======
-class User(BaseModel, AbstractUser):
-    provider_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
->>>>>>> f95de1e (feat: feature/users 회원가입 model 수정 및 serializers.py 생성)
+    provider_id: CharField = models.CharField(max_length=255, null=True, blank=True, unique=True
     provider = models.CharField(max_length=20, null=True, blank=True)
     group_admin_id = models.IntegerField(null=True, blank=True)
     email = models.EmailField(unique=True)
@@ -65,11 +59,8 @@ class User(BaseModel, AbstractUser):
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 
-<<<<<<< HEAD
     objects = UserManager["User"] = UserManager()
-=======
-    objects = UesrManager()
->>>>>>> f95de1e (feat: feature/users 회원가입 model 수정 및 serializers.py 생성)
+
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

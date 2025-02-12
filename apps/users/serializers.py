@@ -18,13 +18,13 @@ class SignupSerializer(serializers.ModelSerializer):
         fields = ["email", "password", "nickname", "profile_image"]
         extra_kwargs = {
             "password": {"write_only": True},
-=======
+
+
 class SignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["email", "nickname", "password", "name"]
         extra_kwargs = {
->>>>>>> f95de1e (feat: feature/users 회원가입 model 수정 및 serializers.py 생성)
             "profile_image": {"required": False},
         }
 
@@ -35,7 +35,6 @@ class SignupSerializer(serializers.ModelSerializer):
 class SocialSignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-<<<<<<< HEAD
         fields = ["email", "nickname"]
 
     def create(self, validated_data):
@@ -51,9 +50,4 @@ class LoginSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError("이메일 또는 비밀번호가 올바르지 않습니다.")
         return user
-<<<<<<< HEAD
-=======
         fields = ["email", "name"]
->>>>>>> f95de1e (feat: feature/users 회원가입 model 수정 및 serializers.py 생성)
-=======
->>>>>>> a0349e3 (config/urls.py signup, login url 추가)
