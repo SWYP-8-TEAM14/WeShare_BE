@@ -1,5 +1,6 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -9,7 +10,7 @@ from .serializers import LoginSerializer, SignupSerializer
 
 class SignupView(APIView):
     @extend_schema(request=SignupSerializer, responses={201: "회원가입 성공"})
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -19,7 +20,7 @@ class SignupView(APIView):
 
 class LoginView(APIView):
     @extend_schema(request=LoginSerializer, responses={200: "로그인 성공"})
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data

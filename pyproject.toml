@@ -35,7 +35,7 @@ line-length = 120
 profile = "black"
 
 [tool.mypy]
-plugins = ["mypy_django_plugin.main", "djangorestframework-stubs"]
+plugins = ["mypy_django_plugin.main"] # "djangorestframework-stubs"]
 python_version = 3.12
 strict = true
 
@@ -48,4 +48,4 @@ module = "manage"
 ignore_errors = true
 
 [tool.django-stubs]
-django_settings_module = "config.settings.base"
+django_settings_module = "config.settings.local"
