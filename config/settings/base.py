@@ -1,4 +1,10 @@
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()  # 🔥 `.env` 파일 로드
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -22,10 +28,19 @@ THIRD_PARTY = [
 
 OWN_APPS = [
     "apps.users",
-    "apps.groups",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY + OWN_APPS
+BASE_INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY + OWN_APPS
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "WeShare API",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -80,7 +95,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Seoul"
 
 USE_I18N = True
 

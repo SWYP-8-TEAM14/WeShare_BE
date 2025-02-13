@@ -44,6 +44,11 @@ jobs:
           echo "${HOME}/.local/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
+        working-directory: ${{ github.workspace }}
+        run: |
+          poetry install --no-root
+
+      - name: Install dependencies
         run: |
           poetry install --no-root
 
@@ -57,7 +62,8 @@ jobs:
 
       - name: Run Mypy
         run: |
-          poetry run mypy .
+          PYTHONPATH=$PWD poetry run mypy .
+
 
       - name: Test python project
         run: |
