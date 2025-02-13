@@ -62,7 +62,6 @@ jobs:
 
       - name: Run Mypy
         run: |
-          poetry run mypy .
           PYTHONPATH=$PWD poetry run mypy .
 
 

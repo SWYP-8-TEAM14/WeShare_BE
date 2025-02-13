@@ -25,7 +25,7 @@ OWN_APPS = [
     "apps.groups",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY + OWN_APPS
+BASE_INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY + OWN_APPS
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

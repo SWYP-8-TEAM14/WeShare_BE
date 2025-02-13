@@ -2,6 +2,8 @@ from dotenv import dotenv_values
 
 from config.settings.base import *
 
+INSTALLED_APPS = BASE_INSTALLED_APPS
+
 ENV = dotenv_values(BASE_DIR / "envs/.env.local")
 
 # SECURITY WARNING: keep the secret key used in production secret!
