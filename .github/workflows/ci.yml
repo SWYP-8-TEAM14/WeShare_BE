@@ -37,10 +37,6 @@ jobs:
         run: |
           sudo rm /etc/localtime
           sudo ln -s /usr/share/zoneinfo/Asia/Seoul /etc/localtime 
-
-      - name: Set environment variables
-        run: echo "SECRET_KEY=django-insecure-j2tp%da55l^wx3xv^sm1a6eruhy@)5$3y75x=8@(e%e0fmr=^5" >> $GITHUB_ENV
-
           
       - name: Install Poetry
         run: |
