@@ -1,7 +1,6 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from rest_framework import serializers
 
 from .models import User
 
@@ -18,13 +17,6 @@ class SignupSerializer(serializers.ModelSerializer):
         fields = ["email", "password", "nickname", "profile_image"]
         extra_kwargs = {
             "password": {"write_only": True},
-
-
-class SignupSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["email", "nickname", "password", "name"]
-        extra_kwargs = {
             "profile_image": {"required": False},
         }
 
