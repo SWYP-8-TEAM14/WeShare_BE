@@ -32,11 +32,15 @@ class BaseModel(models.Model):
 
 
 class User(BaseModel, AbstractUser, PermissionsMixin):
-    provider_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
-    provider = models.CharField(max_length=20, null=True, blank=True)
-    group_admin_id = models.IntegerField(null=True, blank=True)
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
+
+    SOCIAL_CHOICES = [("KAKAO", "Kakao"), ("NAVER", "Naver")]
+
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
+    social_type = models.CharField(max_length=10, choices=SOCIAL_CHOICES)
+    group_admin_id = models.IntegerField(null=True, blank=True)
     phone_number = models.CharField(max_length=100, unique=True)
     nickname = models.CharField(max_length=20, unique=True)
     profile_image = models.CharField(max_length=255, null=True, blank=True)
@@ -55,9 +59,6 @@ class User(BaseModel, AbstractUser, PermissionsMixin):
 
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
-
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []
 
     class Meta:
         db_table = "users"
