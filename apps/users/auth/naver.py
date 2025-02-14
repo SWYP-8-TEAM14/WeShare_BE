@@ -1,17 +1,18 @@
 import requests
-from django.conf import settings
+from django.views.generic import RedirectView
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from typing import Any, cast
 
-from config.settings.base import env
 from apps.users.models import User
-from django.http import HttpRequest
-from django.views.generic import RedirectView
+from config.settings.base import env
+
+# from typing import Any, cast
+# from django.conf import settings
+# from django.http import HttpRequest
 
 NAVER_CALLBACK_URL = "/auth/naver/callback/"
 NAVER_STATE = "naver_login"
