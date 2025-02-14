@@ -22,7 +22,7 @@ NAVER_STATE = "naver_login"
 NAVER_LOGIN_URL = "https://nid.naver.com/oauth2.0/authorize"
 
 
-class NaverLoginRedirectView(RedirectView):
+class NaverLoginView(RedirectView):
     permission_classes = [AllowAny]
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
