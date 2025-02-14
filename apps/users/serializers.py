@@ -28,7 +28,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):  # type: ignore
         read_only_fields = ["id", "email", "social_type"]
 
 
-def update(self, instance: User, validated_data: dict[str, Any]) -> User:
+def update(self: "UserSerializer", instance: User, validated_data: dict[str, Any]) -> User:
     # validated_data: 유효성 검사가 완료된 수정할 데이터
     # instance: 수정할 User 객체
 

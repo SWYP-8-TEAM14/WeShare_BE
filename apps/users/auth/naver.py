@@ -1,4 +1,7 @@
+from typing import Any
+
 import requests
+from django.http import HttpRequest, HttpResponse
 from django.views.generic import RedirectView
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -22,7 +25,7 @@ NAVER_LOGIN_URL = "https://nid.naver.com/oauth2.0/authorize"
 class NaverLoginRedirectView(RedirectView):
     permission_classes = [AllowAny]
 
-    def get(self, request: Request) -> Response:
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         # 네이버 로그인 URL 생성
         naver_login_url = (
             f"https://nid.naver.com/oauth2.0/authorize?"
@@ -80,8 +83,6 @@ class NaverCallbackView(APIView):
             user = User.objects.create(
                 email=email,
                 nickname=user_info.get("nickname", ""),
-                gender=gender_map.get(user_info.get("gender"), None),
-                birth=user_info.get("birth", None),
                 social_type="NAVER",
                 is_active=True,
             )
@@ -100,8 +101,6 @@ class NaverCallbackView(APIView):
                 "user_data": {
                     "email": user.email,
                     "nickname": user.nickname,
-                    "gender": user.gender,
-                    "birthday": user.birth,
                 },
             },
             status=status.HTTP_200_OK,

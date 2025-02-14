@@ -465,6 +465,17 @@ offline = ["drf-spectacular-sidecar"]
 sidecar = ["drf-spectacular-sidecar"]
 
 [[package]]
+name = "environ"
+version = "1.0"
+description = "Stack Based Globals Management"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "environ-1.0.tar.gz", hash = "sha256:4df7f1dfeb7d1c988d2e19a8bd5d547a526e0400aeb35adf732032472f35dcb0"},
+]
+
+[[package]]
 name = "idna"
 version = "3.10"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -1019,4 +1030,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "a48053b39f40ac71cb269feb0c53db74285aebcd1c2db65159dd25afe81615d5"
+content-hash = "660a824a1ed082f4232486135d264e3c9bb7dec606be9f6873193c602f47f9ee"

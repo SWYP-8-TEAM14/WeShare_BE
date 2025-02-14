@@ -1,8 +1,9 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from typing import Any, Dict, List
 
-import environ
+import environ  # type: ignore
 
 env = environ.Env(DEBUG=(bool, False))
 
@@ -11,7 +12,7 @@ env = environ.Env(DEBUG=(bool, False))
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # environ.Env.read_env()
-env_path = os.path.join(BASE_DIR, ".env")
+env_path = os.path.join(BASE_DIR, "envs/.env.local")
 if os.path.exists(env_path):
     environ.Env.read_env(env_path)
 
@@ -41,9 +42,6 @@ OWN_APPS = [
 
 BASE_INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY + OWN_APPS
 
-REST_FRAMEWORK = {
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-}
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "WeShare API",
@@ -121,7 +119,8 @@ USE_TZ = True
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-REST_FRAMEWORK = {
+REST_FRAMEWORK: Dict[str, Any] = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
