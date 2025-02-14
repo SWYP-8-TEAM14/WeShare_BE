@@ -54,7 +54,7 @@ class SignupSerializer(serializers.ModelSerializer):  # type: ignore
         return User.objects.create_user(**validated_data)
 
 
-class SocialSignupSerializer(serializers.ModelSerializer[User]):
+class KakaoLoginSerializer(serializers.ModelSerializer[User]):
     class Meta:
         model = User
         fields = ["email", "nickname"]
