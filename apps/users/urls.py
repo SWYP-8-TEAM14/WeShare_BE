@@ -1,6 +1,9 @@
 from django.urls import path
 
-from .views import LoginView, SignupView  # 필요에 따라 수정
+# from .auth.kakao import KakaoCallbackView, KakaoLoginView
+from .auth.naver import NaverCallbackView, NaverLoginView
+from .auth.views import LoginView, SignupView
+from .views import UserView
 
 urlpatterns = [
     path("signup/", SignupView.as_view(), name="signup"),

@@ -1,14 +1,23 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
-from dotenv import load_dotenv
+import environ
 
-load_dotenv()  # 🔥 `.env` 파일 로드
-SECRET_KEY = os.getenv("SECRET_KEY")
+env = environ.Env(DEBUG=(bool, False))
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# environ.Env.read_env()
+env_path = os.path.join(BASE_DIR, ".env")
+if os.path.exists(env_path):
+    environ.Env.read_env(env_path)
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = env("SECRET_KEY")
+ALLOWED_HOSTS: list[str] = ["*"]
 
 # Application definition
 DJANGO_APPS = [
@@ -53,6 +62,14 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
+
+
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "https://weshare.com",
+# ]
+#
+# CORS_ALLOW_CREDENTIALS = True
 
 TEMPLATES = [
     {
@@ -103,3 +120,31 @@ USE_TZ = True
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",
+    ],
+    # "DEFAULT_AUTHENTICATION_CLASSES": [
+    #     "rest_framework.authentication.BasicAuthentication",
+    #     "rest_framework.authentication.SessionAuthentication",
+    # ],
+}
+
+# NCP_STORAGE = {
+#     "ACCESS_KEY": env("NCP_ACCESS_KEY"),
+#     "SECRET_KEY": env("NCP_SECRET_KEY"),
+#     "BUCKET_NAME": "sharing_photos",
+#     "ENDPOINT_URL": "https://kr.object.ncloudstorage.com",
+# }
+#
+# SIMPLE_JWT = {
+#     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+#     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+#     "ROTATE_REFRESH_TOKENS": False,
+#     "BLACKLIST_AFTER_ROTATION": True,
+# }
