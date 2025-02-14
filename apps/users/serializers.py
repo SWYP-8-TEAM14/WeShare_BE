@@ -10,7 +10,35 @@ from .models import User
 class UserSerializer(ModelSerializer):  # type: ignore
     class Meta:
         model = User
-        fields = ["id", "nickname", "email", "profile_image", "created_at", "updated_at"]
+        fields = ["id", "nickname", "email", "profile_image", "social_type", "created_at", "updated_at"]
+        read_only_fields = ["id", "email", "social_type"]
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):  # type: ignore
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "nickname",
+            "email",
+            "profile_image",
+            "social_type",
+            "created_at",
+        ]
+        read_only_fields = ["id", "email", "social_type"]
+
+
+def update(self, instance: User, validated_data: dict[str, Any]) -> User:
+    # validated_data: 유효성 검사가 완료된 수정할 데이터
+    # instance: 수정할 User 객체
+
+    # 새로운 값이 있으면 업데이트, 없으면 기존 값 유지
+    instance.nickname = validated_data.get("nickname", instance.nickname)
+    instance.profile_image = validated_data.get("profile_image", instance.profile_image)
+
+    instance.save()
+
+    return instance
 
 
 class SignupSerializer(serializers.ModelSerializer):  # type: ignore
