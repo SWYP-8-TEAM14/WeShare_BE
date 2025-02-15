@@ -39,7 +39,6 @@ class User(BaseModel, AbstractUser, PermissionsMixin):
 
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
-    social_type = models.CharField(max_length=10, choices=SOCIAL_CHOICES)
     group_admin_id = models.IntegerField(null=True, blank=True)
     phone_number = models.CharField(max_length=100, unique=True)
     nickname = models.CharField(max_length=20, unique=True)
