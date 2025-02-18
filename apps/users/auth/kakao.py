@@ -89,7 +89,6 @@ class KakaoCallbackView(APIView):
             user = User.objects.create(
                 email=email,
                 nickname=profile.get("nickname", ""),
-                social_type="KAKAO",
                 is_active=True,
             )
             created = True

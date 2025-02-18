@@ -83,7 +83,6 @@ class NaverCallbackView(APIView):
             user = User.objects.create(
                 email=email,
                 nickname=user_info.get("nickname", ""),
-                social_type="NAVER",
                 is_active=True,
             )
             created = True
