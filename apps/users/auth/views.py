@@ -16,6 +16,13 @@ from apps.users.serializers import (
 from config.settings.base import env
 
 
+class HomeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        return Response({
+            "message": "WeShare 홈 접속 성공",
+        })
 class SignupView(APIView):
     permission_classes = [AllowAny]
 
