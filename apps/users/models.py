@@ -7,10 +7,15 @@ UserType = TypeVar("UserType", bound="User")
 
 
 class UserManager(BaseUserManager[UserType]):
-    def create_user(self, email: str, password: Optional[str] = None, **extra_fields: dict[str, Any]) -> UserType:
+    def create_user(self, email: str, username: str, password: Optional[str] = None, **extra_fields: dict[str, Any]) -> UserType:
         if not email:
             raise ValueError("이메일은 필수입니다.")
-        user: UserType = self.model(email=self.normalize_email(email), **extra_fields)
+        if not username:
+            raise ValueError("닉네임(username)은 필수입니다.")
+
+        extra_fields.pop("nickname", None)
+
+        user: UserType = self.model(email=self.normalize_email(email), username=username, **extra_fields)
         if password:
             user.set_password(password)
         user.save(using=self._db)
@@ -41,7 +46,7 @@ class User(BaseModel, AbstractUser, PermissionsMixin):
     password = models.CharField(max_length=255)
     group_admin_id = models.IntegerField(null=True, blank=True)
     phone_number = models.CharField(max_length=100, unique=True)
-    nickname = models.CharField(max_length=20, unique=True)
+    username = models.CharField(max_length=20, unique=True)
     profile_image = models.CharField(max_length=255, null=True, blank=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
@@ -65,4 +70,4 @@ class User(BaseModel, AbstractUser, PermissionsMixin):
         verbose_name_plural = "유저정보"
 
     def __str__(self) -> str:
-        return self.nickname
+        return self.username
