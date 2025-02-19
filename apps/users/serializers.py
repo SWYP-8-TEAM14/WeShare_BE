@@ -10,8 +10,8 @@ from .models import User
 class UserSerializer(ModelSerializer):  # type: ignore
     class Meta:
         model = User
-        fields = ["id", "nickname", "email", "profile_image", "social_type", "created_at", "updated_at"]
-        read_only_fields = ["id", "email", "social_type"]
+        fields = ["id", "username", "email", "profile_image", "created_at", "updated_at"]
+        read_only_fields = ["id", "email"]
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):  # type: ignore
@@ -19,13 +19,12 @@ class UserUpdateSerializer(serializers.ModelSerializer):  # type: ignore
         model = User
         fields = [
             "id",
-            "nickname",
+            "username",
             "email",
             "profile_image",
-            "social_type",
             "created_at",
         ]
-        read_only_fields = ["id", "email", "social_type"]
+        read_only_fields = ["id", "email"]
 
 
 def update(self: "UserSerializer", instance: User, validated_data: dict[str, Any]) -> User:
@@ -33,7 +32,7 @@ def update(self: "UserSerializer", instance: User, validated_data: dict[str, Any
     # instance: 수정할 User 객체
 
     # 새로운 값이 있으면 업데이트, 없으면 기존 값 유지
-    instance.nickname = validated_data.get("nickname", instance.nickname)
+    instance.username = validated_data.get("username", instance.username)
     instance.profile_image = validated_data.get("profile_image", instance.profile_image)
 
     instance.save()
@@ -41,10 +40,10 @@ def update(self: "UserSerializer", instance: User, validated_data: dict[str, Any
     return instance
 
 
-class SignupSerializer(serializers.ModelSerializer):  # type: ignore
+class SignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["email", "password", "nickname", "profile_image"]
+        fields = ["email", "password", "username", "profile_image"]
         extra_kwargs = {
             "password": {"write_only": True},
             "profile_image": {"required": False},
@@ -57,7 +56,7 @@ class SignupSerializer(serializers.ModelSerializer):  # type: ignore
 class KakaoLoginSerializer(serializers.ModelSerializer[User]):
     class Meta:
         model = User
-        fields = ["email", "nickname"]
+        fields = ["email", "username"]
 
     def create(self, validated_data: dict[str, Any]) -> User:
         return User.objects.create_user(**validated_data)
