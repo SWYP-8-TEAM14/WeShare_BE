@@ -75,7 +75,7 @@ class KakaoCallbackView(APIView):
         kakao_account = user_info.get("kakao_account", {})
         profile = kakao_account.get("profile", {})
         email = kakao_account.get("email")
-        nickname = profile.get("nickname")
+        username = profile.get("username")
 
         # 먼저 사용자를 조회합니다.
         existing_user = User.objects.filter(email=email).first()
@@ -88,7 +88,7 @@ class KakaoCallbackView(APIView):
             # 새로운 사용자 생성
             user = User.objects.create(
                 email=email,
-                nickname=profile.get("nickname", ""),
+                username=profile.get("username", ""),
                 is_active=True,
             )
             created = True
@@ -104,7 +104,7 @@ class KakaoCallbackView(APIView):
                 "user_id": user.id,
                 "created": created,
                 "user_data": {
-                    "nickname": user.nickname,
+                    "username": user.username,
                     "email": user.email,
                 },
             },

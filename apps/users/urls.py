@@ -8,20 +8,22 @@ from .auth.views import (
     NaverReissueView,
     SignupView,
     UserDeleteView,
-    UserUpdateView,
+    UserUpdateView, LoginView, HomeView,
 )
 from .views import UserView
 
 urlpatterns = [
-    path("api/v1/user/", UserView.as_view()),
-    path("api/v1/signup/", SignupView.as_view(), name="signup"),
-    path("api/v1/user/patch/", UserUpdateView.as_view(), name="user-update"),
-    path("api/v1/user/delete/", UserDeleteView.as_view(), name="user-delete"),
-    path("api/v1/user/logout/", LogoutView.as_view(), name="logout"),
-    path("api/v1/user/auth/kakao/", KakaoLoginView.as_view(), name="kakao-login"),
-    path("api/v1/user/auth/kakao/callback/", KakaoCallbackView.as_view(), name="kakao-callback"),
-    path("api/v1/user/auth/naver/", NaverLoginView.as_view(), name="naver-login"),
-    path("api/v1/user/auth/naver/callback/", NaverCallbackView.as_view(), name="naver-callback"),
-    path("api/v1/user/auth/kakao/reissue/", KakaoReissueView.as_view(), name="kakao-reissue"),
-    path("api/v1/user/auth/naver/reissue/", NaverReissueView.as_view(), name="naver-reissue"),
+    path("user/", UserView.as_view()),
+    path("signup/", SignupView.as_view(), name="signup"),
+    path("patch/", UserUpdateView.as_view(), name="user-update"),
+    path("delete/", UserDeleteView.as_view(), name="user-delete"),
+    path("logout/", LogoutView.as_view(), name="logout"),
+    path("user/auth/kakao/", KakaoLoginView.as_view(), name="kakao-login"),
+    path("user/auth/kakao/login/callback/", KakaoCallbackView.as_view(), name="kakao-callback"),
+    path("user/auth/naver/", NaverLoginView.as_view(), name="naver-login"),
+    path("user/auth/naver/callback/", NaverCallbackView.as_view(), name="naver-callback"),
+    path("user/auth/kakao/reissue/", KakaoReissueView.as_view(), name="kakao-reissue"),
+    path("user/auth/naver/reissue/", NaverReissueView.as_view(), name="naver-reissue"),
 ]
+
+
