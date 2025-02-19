@@ -41,9 +41,10 @@ def update(self: "UserSerializer", instance: User, validated_data: dict[str, Any
 
 
 class SignupSerializer(serializers.ModelSerializer):
+    phone_number = serializers.CharField(required=False, allow_null=True)
     class Meta:
         model = User
-        fields = ["email", "password", "username", "profile_image"]
+        fields = ["email", "password", "username", "profile_image", "phone_number"]
         extra_kwargs = {
             "password": {"write_only": True},
             "profile_image": {"required": False},

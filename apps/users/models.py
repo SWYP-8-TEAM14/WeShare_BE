@@ -13,7 +13,7 @@ class UserManager(BaseUserManager[UserType]):
         if not username:
             raise ValueError("닉네임(username)은 필수입니다.")
 
-        extra_fields.pop("nickname", None)
+        extra_fields.pop("username", None)
 
         user: UserType = self.model(email=self.normalize_email(email), username=username, **extra_fields)
         if password:
@@ -45,7 +45,7 @@ class User(BaseModel, AbstractUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
     group_admin_id = models.IntegerField(null=True, blank=True)
-    phone_number = models.CharField(max_length=100, unique=True)
+    phone_number = models.CharField(max_length=100, unique=True, null=True, blank=True)
     username = models.CharField(max_length=20, unique=True)
     profile_image = models.CharField(max_length=255, null=True, blank=True)
     deleted_at = models.DateTimeField(null=True, blank=True)

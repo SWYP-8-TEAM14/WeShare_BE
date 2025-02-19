@@ -82,7 +82,7 @@ class NaverCallbackView(APIView):
             gender_map = {"M": "male", "F": "female"}
             user = User.objects.create(
                 email=email,
-                nickname=user_info.get("nickname", ""),
+                username=user_info.get("username", ""),
                 is_active=True,
             )
             created = True
@@ -99,7 +99,7 @@ class NaverCallbackView(APIView):
                 "created": created,
                 "user_data": {
                     "email": user.email,
-                    "nickname": user.nickname,
+                    "username": user.username,
                 },
             },
             status=status.HTTP_200_OK,
