@@ -121,7 +121,7 @@ class KakaoReissueView(APIView):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {
             "grant_type": "refresh_token",
-            "client_id": env("KAKAO_REST_API_KEY"),
+            "client_id": env("KAKAO_CLIENT_ID"),
             "refresh_token": refresh_token,
         }
 

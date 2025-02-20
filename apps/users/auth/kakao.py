@@ -20,7 +20,7 @@ class KakaoLoginView(APIView):
     def get(self, request: Request) -> Response:
         kakao_auth_url = (
             f"https://kauth.kakao.com/oauth/authorize?"
-            f"client_id={env("KAKAO_REST_API_KEY")}&"
+            f"client_id={env("KAKAO_CLIENT_ID")}&"
             f"redirect_uri={env("KAKAO_REDIRECT_URI")}&"
             f"response_type=code"
         )
@@ -44,12 +44,27 @@ class KakaoCallbackView(APIView):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {
             "grant_type": "authorization_code",
-            "client_id": env("KAKAO_REST_API_KEY"),
+            "client_id": env("KAKAO_CLIENT_ID"),
             "redirect_uri": env("KAKAO_REDIRECT_URI"),
             "code": code,
         }
 
+        client_secret = env("KAKAO_SECRET", default=None)
+        if client_secret:
+            data["client_secret"] = client_secret
+
         token_response = requests.post(token_url, headers=headers, data=data)
+        print("🔹 Token Response:", token_response.text)
+
+        try:
+            token_json = token_response.json()
+            print("Token Response:", token_json)
+        except requests.exceptions.JSONDecodeError:
+            return Response(
+                {"error": "Failed to prse JSON", "details": token_response.text},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
         if token_response.status_code != 200:
             return Response(
                 {"error": "Failed to get access token", "details": token_response.text},
@@ -57,19 +72,21 @@ class KakaoCallbackView(APIView):
             )
 
         access_token = token_response.json().get("access_token")
+        print("🔹 Access Token:", access_token)
 
         # 사용자 정보 요청
         user_info_url = "https://kapi.kakao.com/v2/user/me"
         headers = {"Authorization": f"Bearer {access_token}"}
         user_info_response = requests.get(user_info_url, headers=headers)
+        print("user Info response", user_info_response.json())
 
         if user_info_response.status_code != 200:
             return Response(
                 {"error": "Failed to get user info", "details": user_info_response.text},
                 status=user_info_response.status_code,
             )
-
         user_info = user_info_response.json()
+
 
         # 사용자 정보 추출
         kakao_account = user_info.get("kakao_account", {})

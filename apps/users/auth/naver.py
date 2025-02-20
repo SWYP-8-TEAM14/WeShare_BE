@@ -9,6 +9,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils.crypto import get_random_string
 
 from apps.users.models import User
 from config.settings.base import env
@@ -26,11 +27,11 @@ class NaverLoginView(RedirectView):
     permission_classes = [AllowAny]
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        # 네이버 로그인 URL 생성
+        state = get_random_string(32)
         naver_login_url = (
             f"https://nid.naver.com/oauth2.0/authorize?"
-            f"response_type=code&client_id={env("NAVER_CLIENT_ID")}"
-            f"&redirect_uri={env("NAVER_REDIRECT_URI")}&state=random_state_string"
+            f"response_type=code&client_id={env('NAVER_CLIENT_ID')}"
+            f"&redirect_uri={env('NAVER_REDIRECT_URI')}&state={state}"
         )
         return Response({"naver_login_url": naver_login_url}, status=status.HTTP_200_OK)
 
@@ -41,13 +42,17 @@ class NaverCallbackView(APIView):
     def get(self, request: Request) -> Response:
         # 콜백으로 전달된 code와 state 파라미터 받기
         code = request.GET.get("code")
+
+        if not code:
+            return Response({"error": "Authorization code is missing"}, status=400)
         state = request.GET.get("state")
+        print(f"🔹 Received State: '{state}'")
 
         # 액세스 토큰 요청
         token_url = (
             f"https://nid.naver.com/oauth2.0/token?"
             f"grant_type=authorization_code&client_id={env("NAVER_CLIENT_ID")}"
-            f"&client_secret={env("NAVER_CLIENT_SECRET")}&code={code}&state={state}"
+            f"&client_secret={env("NAVER_SECRET")}&code={code}&state={state}"
         )
         token_response = requests.get(token_url)
         token_data = token_response.json()
@@ -79,7 +84,6 @@ class NaverCallbackView(APIView):
             created = False
         else:
             # 새로운 사용자 생성
-            gender_map = {"M": "male", "F": "female"}
             user = User.objects.create(
                 email=email,
                 username=user_info.get("username", ""),
