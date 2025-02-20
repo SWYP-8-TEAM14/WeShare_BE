@@ -1,29 +1,9 @@
 from django.db import models
-
-class User(models.Model):
-    user_id = models.AutoField(primary_key=True)
-    social_id = models.CharField(max_length=255, unique=True)
-    email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=20, unique=True)
-    nickname = models.CharField(max_length=50)
-    profile_image = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
-class Group(models.Model):
-    group_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    group_name = models.CharField(max_length=255)
-    group_type = models.CharField(max_length=50)
-    visibility = models.CharField(max_length=50)
-    group_image = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+from apps.users.models import User
 
 class Item(models.Model):
     item_id = models.AutoField(primary_key=True)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    # group_id = models.ForeignKey(Group, on_delete=models.CASCADE)
     item_name = models.CharField(max_length=255)
     item_description = models.TextField(null=True, blank=True)
     item_image = models.TextField(null=True, blank=True)
