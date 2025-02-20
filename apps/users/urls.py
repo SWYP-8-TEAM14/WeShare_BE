@@ -8,7 +8,7 @@ from .auth.views import (
     NaverReissueView,
     SignupView,
     UserDeleteView,
-    UserUpdateView,
+    UserUpdateView, LoginView, HomeView,
 )
 from .views import UserView
 
@@ -25,3 +25,5 @@ urlpatterns = [
     path("user/auth/kakao/reissue/", KakaoReissueView.as_view(), name="kakao-reissue"),
     path("user/auth/naver/reissue/", NaverReissueView.as_view(), name="naver-reissue"),
 ]
+
+

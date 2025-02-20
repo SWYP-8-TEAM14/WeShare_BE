@@ -16,12 +16,24 @@ from apps.users.serializers import (
 from config.settings.base import env
 
 
+class HomeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        return Response({
+            "message": "WeShare 홈 접속 성공",
+        })
 class SignupView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(request=SignupSerializer, responses={201: "회원가입 성공"})
     def post(self, request: Request) -> Response:
-        serializer = SignupSerializer(data=request.data)
+        data = request.data.copy()
+
+        if not data.get("phone_number"):
+            data["phone_number"] = None
+
+        serializer = SignupSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "회원가입 성공"}, status=status.HTTP_201_CREATED)

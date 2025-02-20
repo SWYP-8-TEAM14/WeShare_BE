@@ -41,16 +41,21 @@ def update(self: "UserSerializer", instance: User, validated_data: dict[str, Any
 
 
 class SignupSerializer(serializers.ModelSerializer):
+    phone_number = serializers.CharField(required=False, allow_null=True)
     class Meta:
         model = User
-        fields = ["email", "password", "username", "profile_image"]
+        fields = ["email", "password", "username", "profile_image", "phone_number"]
         extra_kwargs = {
             "password": {"write_only": True},
             "profile_image": {"required": False},
         }
 
     def create(self, validated_data: dict[str, Any]) -> User:
-        return User.objects.create_user(**validated_data)
+        password = validated_data.get("password")
+        user = User.objects.create_user(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
 
 
 class KakaoLoginSerializer(serializers.ModelSerializer[User]):

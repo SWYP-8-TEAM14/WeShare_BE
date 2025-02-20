@@ -3,7 +3,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, List
 
-import environ  # type: ignore
+import environ
 
 env = environ.Env(DEBUG=(bool, False))
 
@@ -28,6 +28,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "apps.shared",
 ]
 
 THIRD_PARTY = [
