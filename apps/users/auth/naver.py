@@ -2,6 +2,7 @@ from typing import Any
 
 import requests
 from django.http import HttpRequest, HttpResponse
+from django.utils.crypto import get_random_string
 from django.views.generic import RedirectView
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -9,7 +10,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.utils.crypto import get_random_string
 
 from apps.users.models import User
 from config.settings.base import env

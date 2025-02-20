@@ -1,6 +1,8 @@
 import requests
+import logging
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema
-from jsonschema.validators import extend
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -20,13 +22,16 @@ class KakaoLoginView(APIView):
     def get(self, request: Request) -> Response:
         kakao_auth_url = (
             f"https://kauth.kakao.com/oauth/authorize?"
-            f"client_id={env("KAKAO_CLIENT_ID")}&"
-            f"redirect_uri={env("KAKAO_REDIRECT_URI")}&"
+            f"client_id={env('KAKAO_CLIENT_ID')}&"
+            f"redirect_uri={env('KAKAO_REDIRECT_URI')}&"
             f"response_type=code"
         )
         return Response({"auth_url": kakao_auth_url}, status=status.HTTP_200_OK)
 
 
+logger = logging.getLogger(__name__)
+
+@method_decorator(csrf_exempt, name="dispatch")
 class KakaoCallbackView(APIView):
     permission_classes = [AllowAny]
 
@@ -34,7 +39,8 @@ class KakaoCallbackView(APIView):
         description="카카오 로그인 콜백 처리",
         responses={200: "사용자 정보 반환", 400: "Authorization code is missing"},
     )
-    def get(self, request: Request) -> Response:
+    def post(self, request: Request) -> Response:
+        logger.info(f"Received callback request with params: {request.query_params}")
         code = request.query_params.get("code")
         if not code:
             return Response({"error": "Authorization code is missing"}, status=400)
@@ -45,40 +51,37 @@ class KakaoCallbackView(APIView):
         data = {
             "grant_type": "authorization_code",
             "client_id": env("KAKAO_CLIENT_ID"),
+            "client_secret": env("KAKAO_SECRET"),
             "redirect_uri": env("KAKAO_REDIRECT_URI"),
             "code": code,
         }
 
-        client_secret = env("KAKAO_SECRET", default=None)
-        if client_secret:
-            data["client_secret"] = client_secret
-
         token_response = requests.post(token_url, headers=headers, data=data)
-        print("🔹 Token Response:", token_response.text)
-
-        try:
-            token_json = token_response.json()
-            print("Token Response:", token_json)
-        except requests.exceptions.JSONDecodeError:
-            return Response(
-                {"error": "Failed to prse JSON", "details": token_response.text},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
         if token_response.status_code != 200:
             return Response(
                 {"error": "Failed to get access token", "details": token_response.text},
                 status=token_response.status_code,
             )
 
-        access_token = token_response.json().get("access_token")
-        print("🔹 Access Token:", access_token)
+        try:
+            token_json = token_response.json()
+            access_token = token_json.get("access_token")
+        except requests.exceptions.JSONDecodeError:
+            return Response(
+                {"error": "Failed to parse JSON", "details": token_response.text},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        if not access_token:
+            return Response(
+                {"error": "Failed to get access token", "details": token_json},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         # 사용자 정보 요청
         user_info_url = "https://kapi.kakao.com/v2/user/me"
         headers = {"Authorization": f"Bearer {access_token}"}
         user_info_response = requests.get(user_info_url, headers=headers)
-        print("user Info response", user_info_response.json())
 
         if user_info_response.status_code != 200:
             return Response(
@@ -87,39 +90,43 @@ class KakaoCallbackView(APIView):
             )
         user_info = user_info_response.json()
 
-
         # 사용자 정보 추출
+        kakao_id = user_info.get("id")  # 카카오 고유 ID
         kakao_account = user_info.get("kakao_account", {})
         profile = kakao_account.get("profile", {})
         email = kakao_account.get("email")
-        username = profile.get("username")
+        nickname = profile.get("nickname")  # username이 아니라 nickname!
 
-        # 먼저 사용자를 조회합니다.
-        existing_user = User.objects.filter(email=email).first()
+        # 이메일이 없는 경우 기본 이메일 생성
+        if not email:
+            email = f"kakao_{kakao_id}@example.com"
 
-        if existing_user:
-            # 기존 사용자의 경우, 카카오 정보로 업데이트하지 않음
-            user = existing_user
+        # 기존 사용자인지 확인 (kakao_id 기반 조회)
+        user = User.objects.filter(kakao_id=kakao_id).first()
+
+        if user:
+            # 기존 유저 → 로그인 처리
             created = False
         else:
-            # 새로운 사용자 생성
+            # 신규 가입
             user = User.objects.create(
+                kakao_id=kakao_id,
                 email=email,
-                username=profile.get("username", ""),
+                username=nickname,
                 is_active=True,
             )
             created = True
 
+        # JWT 토큰 생성
         refresh = RefreshToken.for_user(user)
 
-        # 응답 반환
         return Response(
             {
                 "access_token": str(refresh.access_token),
                 "refresh_token": str(refresh),
                 "message": "User information retrieved successfully",
                 "user_id": user.id,
-                "created": created,
+                "created": created,  # True면 새로 가입된 것, False면 기존 로그인
                 "user_data": {
                     "username": user.username,
                     "email": user.email,

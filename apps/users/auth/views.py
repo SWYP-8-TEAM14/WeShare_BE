@@ -1,4 +1,6 @@
 import requests
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -20,9 +22,13 @@ class HomeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request) -> Response:
-        return Response({
-            "message": "WeShare 홈 접속 성공",
-        })
+        return Response(
+            {
+                "message": "WeShare 홈 접속 성공",
+            }
+        )
+
+
 class SignupView(APIView):
     permission_classes = [AllowAny]
 
@@ -40,14 +46,21 @@ class SignupView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(request=LoginSerializer, responses={200: "로그인 성공"})
     def post(self, request: Request) -> Response:
+        print("LoginView POST 요청도착")
+        import json
+        print("요청 데이터:", json.dumps(request.data, indent=4, ensure_ascii=False))
+
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.validated_data
+            print("데이터 검증 성공")
+            user = serializer.validated_data["user"]  # ✅ 여기서 올바르게 `user` 가져오기
+
             refresh = RefreshToken.for_user(user)
             return Response(
                 {
@@ -56,7 +69,10 @@ class LoginView(APIView):
                 },
                 status=status.HTTP_200_OK,
             )
+        else:
+            print("❌ 데이터 검증 실패:", serializer.errors)  # 🔍 데이터 검증 실패 확인
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class LogoutView(APIView):

@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
-from .models import User
+from apps.users.models import User
 
 
 class UserSerializer(ModelSerializer):  # type: ignore
@@ -42,6 +42,7 @@ def update(self: "UserSerializer", instance: User, validated_data: dict[str, Any
 
 class SignupSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(required=False, allow_null=True)
+
     class Meta:
         model = User
         fields = ["email", "password", "username", "profile_image", "phone_number"]
@@ -68,11 +69,14 @@ class KakaoLoginSerializer(serializers.ModelSerializer[User]):
 
 
 class LoginSerializer(serializers.Serializer):  # type: ignore
-    email = serializers.EmailField()
+    username = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
-    def validate(self, data: dict[str, Any]) -> User:
-        user = authenticate(email=data["email"], password=data["password"])
-        if not isinstance(user, User):
-            raise serializers.ValidationError("이메일 또는 비밀번호가 올바르지 않습니다.")
+    def validate(self, data):
+        username = data.get("username")
+        password = data.get("password")
+
+        user = authenticate(username=username, password=password)
+        if not user:
+            raise serializers.ValidationError("유효하지 않은 자격 증명입니다.")
         return user

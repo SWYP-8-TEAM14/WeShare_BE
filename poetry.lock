@@ -320,6 +320,22 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-cors-headers"
+version = "4.7.0"
+description = "django-cors-headers is a Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS)."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "django_cors_headers-4.7.0-py3-none-any.whl", hash = "sha256:f1c125dcd58479fe7a67fe2499c16ee38b81b397463cf025f0e2c42937421070"},
+    {file = "django_cors_headers-4.7.0.tar.gz", hash = "sha256:6fdf31bf9c6d6448ba09ef57157db2268d515d94fc5c89a0a1028e1fc03ee52b"},
+]
+
+[package.dependencies]
+asgiref = ">=3.6"
+django = ">=4.2"
+
+[[package]]
 name = "django-environ"
 version = "0.12.0"
 description = "A package that allows you to utilize 12factor inspired environment variables to configure your Django application."
@@ -465,6 +481,18 @@ typing-extensions = ">=3.10.0"
 compatible-mypy = ["django-stubs[compatible-mypy]", "mypy (>=1.12,<1.14)"]
 coreapi = ["coreapi (>=2.0.0)"]
 markdown = ["types-Markdown (>=0.1.5)"]
+
+[[package]]
+name = "drf-dynamic-fields"
+version = "0.4.0"
+description = "Dynamically return subset of Django REST Framework serializer fields"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "drf_dynamic_fields-0.4.0-py2.py3-none-any.whl", hash = "sha256:48b879fe899905bc18593a61bca43e3b595dc3431b3b4ee499a9fd6c9a53f98c"},
+    {file = "drf_dynamic_fields-0.4.0.tar.gz", hash = "sha256:f20a5ec27d003db7595c9315db22217493dcaed575f3811d3e12f264c791c20c"},
+]
 
 [[package]]
 name = "drf-spectacular"
@@ -1071,4 +1099,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "45f262279e16dae5bbc28aaab183eb1342e68e4e394082c45d4a69023ab1e7b6"
+content-hash = "2b216c90f5cd7e398144e009099f5ebfb6dacb323709538637e825d19eebfcd4"
