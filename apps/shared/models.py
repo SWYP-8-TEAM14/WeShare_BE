@@ -5,7 +5,7 @@ class User(models.Model):
     social_id = models.CharField(max_length=255, unique=True)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=20, unique=True)
-    nickname = models.CharField(max_length=50)
+    username = models.CharField(max_length=50)
     profile_image = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
