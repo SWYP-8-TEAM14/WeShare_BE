@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Item, Reservation, RentalRecord
+from .models import Item, Reservation, RentalRequest, RentalRecord
 
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,12 +18,33 @@ class ItemSerializer(serializers.ModelSerializer):
                 , 'reservation_user_name'
         ]
 
-class ReservationSerializer(serializers.ModelSerializer):
+class ItemDetailSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Reservation
+        model = Item
         fields = '__all__'
 
-class RentalRecordSerializer(serializers.ModelSerializer):
+class ItemReservationsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = RentalRecord
+        model = Item
         fields = '__all__'
+
+class ItemReservationsListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = '__all__'
+
+class ItemPickupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = '__all__'
+
+class ItemReturnSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = '__all__'
+
+class ItemReturnListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = '__all__'
+

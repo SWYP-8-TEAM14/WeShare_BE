@@ -1,13 +1,12 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import ItemView, ReservationView, RentalRecordView
-
-# DRF 라우터 생성
-router = DefaultRouter()
-router.register(r'items', ItemView)
-router.register(r'reservations', ReservationView)
-router.register(r'rentals', RentalRecordView)
+from .views import ItemView, ItemDetailView, ItemReservationsView, ItemReservationsListView, ItemPickupView, ItemReturnView, ItemReturnListView
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("items/", ItemView.as_view()),
+    path("items/detail/", ItemDetailView.as_view()),
+    path("items/reservations/", ItemReservationsView.as_view()),
+    path("items/reservations/list/", ItemReservationsListView.as_view()),
+    path("items/pickup/", ItemPickupView.as_view()),
+    path("items/return/", ItemReturnView.as_view()),
+    path("items/return/list/", ItemReturnListView.as_view()),
 ]
