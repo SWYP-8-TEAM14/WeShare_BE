@@ -141,6 +141,7 @@ REST_FRAMEWORK: Dict[str, Any] = {
 }
 
 AUTHENTICATION_BACKENDS = [
+    "apps.users.auth_backends.EmailBackend",
     "django.contrib.auth.backends.ModelBackend",  # 기본 인증 방식
 ]
 

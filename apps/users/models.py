@@ -40,7 +40,7 @@ class BaseModel(models.Model):
 
 class User(BaseModel, AbstractUser, PermissionsMixin):
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ["username"]
 
     SOCIAL_CHOICES = [("KAKAO", "Kakao"), ("NAVER", "Naver")]
 

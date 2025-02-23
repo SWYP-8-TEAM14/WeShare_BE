@@ -1,8 +1,11 @@
 from typing import Any
 
+import self
+from attr import attrs
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
+from rest_framework_simplejwt.serializers import TokenObtainSerializer, TokenObtainPairSerializer
 
 from apps.users.models import User
 
@@ -76,15 +79,32 @@ class NaverLoginSerializer(serializers.ModelSerializer[User]):
         return User.objects.create_user(**validated_data)
 
 
-class LoginSerializer(serializers.Serializer):  # type: ignore
-    username = serializers.CharField()
+class LoginSerializer(TokenObtainPairSerializer):
+    email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True)
 
-    def validate(self, data):
-        username = data.get("username")
-        password = data.get("password")
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
 
-        user = authenticate(username=username, password=password)
+        user = authenticate(username=email, password=password)  # 이메일을 `username`으로 사용
+
         if not user:
             raise serializers.ValidationError("유효하지 않은 자격 증명입니다.")
-        return user
+
+        # `super().validate()` 실행 전에 `attrs["username"]`을 설정
+        attrs["username"] = user.email  # `email`을 `username`으로 설정
+        token_data = super().validate(attrs)  # `super().validate()` 호출
+
+        # 응답 데이터 구성
+        token_data["message"] = "로그인 성공"
+        token_data["user_id"] = user.id
+
+        return token_data
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token["email"] = user.email  # JWT에 추가 정보 포함 가능
+        return token
+
