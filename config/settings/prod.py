@@ -15,7 +15,7 @@ ROOT_URLCONF = "config.urls"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["223.130.156.2", "127.0.0.1"]
+ALLOWED_HOSTS = ["223.130.156.2", "127.0.0.1", "0.0.0.0"]
 
 DATABASES = {
     "default": {

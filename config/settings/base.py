@@ -40,6 +40,7 @@ THIRD_PARTY = [
 
 OWN_APPS = [
     "apps.users",
+    "apps.groups",
 ]
 
 BASE_INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY + OWN_APPS
