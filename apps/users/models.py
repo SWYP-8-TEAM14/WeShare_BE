@@ -7,7 +7,9 @@ UserType = TypeVar("UserType", bound="User")
 
 
 class UserManager(BaseUserManager[UserType]):
-    def create_user(self, email: str, username: str, password: Optional[str] = None, **extra_fields: dict[str, Any]) -> UserType:
+    def create_user(
+        self, email: str, username: str, password: Optional[str] = None, **extra_fields: dict[str, Any]
+    ) -> UserType:
         if not email:
             raise ValueError("이메일은 필수입니다.")
         if not username:
@@ -38,10 +40,11 @@ class BaseModel(models.Model):
 
 class User(BaseModel, AbstractUser, PermissionsMixin):
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ["username"]
 
     SOCIAL_CHOICES = [("KAKAO", "Kakao"), ("NAVER", "Naver")]
 
+    kakao_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
     group_admin_id = models.IntegerField(null=True, blank=True)

@@ -22,6 +22,7 @@ ALLOWED_HOSTS: list[str] = ["*"]
 
 # Application definition
 DJANGO_APPS = [
+    "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -51,9 +52,10 @@ SPECTACULAR_SETTINGS = {
 }
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -62,13 +64,18 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "config.urls"
 
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "https://kauth.kakao.com",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    # "http://localhost:3000",
+    # "https://weshare.com",
+]
 
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "https://weshare.com",
-# ]
-#
-# CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = ["https://kauth.kakao.com", "http://127.0.0.1:8000", "http://localhost:8000"]
 
 TEMPLATES = [
     {
@@ -123,17 +130,21 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK: Dict[str, Any] = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
         "rest_framework.permissions.AllowAny",
     ],
-    # "DEFAULT_AUTHENTICATION_CLASSES": [
-    #     "rest_framework.authentication.BasicAuthentication",
-    #     "rest_framework.authentication.SessionAuthentication",
-    # ],
 }
+
+AUTHENTICATION_BACKENDS = [
+    "apps.users.auth_backends.EmailBackend",
+    "django.contrib.auth.backends.ModelBackend",  # 기본 인증 방식
+]
+
 
 # NCP_STORAGE = {
 #     "ACCESS_KEY": env("NCP_ACCESS_KEY"),
@@ -142,9 +153,10 @@ REST_FRAMEWORK: Dict[str, Any] = {
 #     "ENDPOINT_URL": "https://kr.object.ncloudstorage.com",
 # }
 #
-# SIMPLE_JWT = {
-#     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-#     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-#     "ROTATE_REFRESH_TOKENS": False,
-#     "BLACKLIST_AFTER_ROTATION": True,
-# }
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",
+}

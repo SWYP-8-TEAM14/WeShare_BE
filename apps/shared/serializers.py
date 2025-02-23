@@ -1,22 +1,27 @@
 from rest_framework import serializers
-from .models import User, Item, Reservation, RentalRecord
+
+from .models import Item, RentalRecord, Reservation, User
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'
+        fields = "__all__"
+
 
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
-        fields = '__all__'
+        fields = "__all__"
+
 
 class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
-        fields = '__all__'
+        fields = "__all__"
+
 
 class RentalRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = RentalRecord
-        fields = '__all__'
+        fields = "__all__"

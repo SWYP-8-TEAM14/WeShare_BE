@@ -1,12 +1,17 @@
+from datetime import timedelta
+
 import requests
-from drf_spectacular.utils import extend_schema
+from django.contrib.auth import authenticate
+from drf_spectacular.utils import extend_schema, OpenApiExample
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
+from apps.users import serializers
 from apps.users.models import User
 from apps.users.serializers import (
     LoginSerializer,
@@ -20,9 +25,13 @@ class HomeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request) -> Response:
-        return Response({
-            "message": "WeShare 홈 접속 성공",
-        })
+        return Response(
+            {
+                "message": "WeShare 홈 접속 성공",
+            }
+        )
+
+
 class SignupView(APIView):
     permission_classes = [AllowAny]
 
@@ -40,23 +49,54 @@ class SignupView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LoginView(APIView):
-    permission_classes = [AllowAny]
+class LoginView(TokenObtainPairView):
+    serializer_class = LoginSerializer
 
-    @extend_schema(request=LoginSerializer, responses={200: "로그인 성공"})
-    def post(self, request: Request) -> Response:
-        serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data
-            refresh = RefreshToken.for_user(user)
-            return Response(
-                {
-                    "access_token": str(refresh.access_token),
-                    "refresh_token": str(refresh),
-                },
-                status=status.HTTP_200_OK,
+    @extend_schema(
+        tags=["user"],
+        summary="User Login",
+        description="Login with email and password to get access and refresh tokens",
+        request=LoginSerializer,
+        examples=[
+            OpenApiExample(
+                "Login Example",
+                value={"email": "user@example.com", "password": "string"},
+                request_only=True,
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        ],
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "message": {"type": "string"},
+                    "access_token": {"type": "string"},
+                    "refresh_token": {"type": "string"},
+                    "user_id": {"type": "integer"},
+                },
+            }
+        },
+    )
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+
+        # `authenticate`에서 `email`을 사용하여 사용자 검증
+        user = authenticate(email=email, password=password)
+
+        if not user:
+            raise serializers.ValidationError("유효하지 않은 자격 증명입니다.")
+
+        # JWT 토큰 생성 (super() 호출)
+        data = super().validate(attrs)
+        data["message"] = "로그인 성공"
+        data["user_id"] = user.id
+
+        return data
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token["email"] = user.email  # 추가 정보 포함 가능
 
 
 class LogoutView(APIView):
@@ -121,7 +161,7 @@ class KakaoReissueView(APIView):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {
             "grant_type": "refresh_token",
-            "client_id": env("KAKAO_REST_API_KEY"),
+            "client_id": env("KAKAO_CLIENT_ID"),
             "refresh_token": refresh_token,
         }
 

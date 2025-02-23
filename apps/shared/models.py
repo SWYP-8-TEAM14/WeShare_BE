@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils import timezone
+
 
 class User(models.Model):
     user_id = models.AutoField(primary_key=True)
@@ -11,6 +13,7 @@ class User(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
+
 class Group(models.Model):
     group_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -21,9 +24,10 @@ class Group(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
 class Item(models.Model):
     item_id = models.AutoField(primary_key=True)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
     item_name = models.CharField(max_length=255)
     item_description = models.TextField(null=True, blank=True)
     item_image = models.TextField(null=True, blank=True)
@@ -32,12 +36,14 @@ class Item(models.Model):
     caution = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
 class Reservation(models.Model):
     book_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    book_date = models.DateTimeField(auto_now_add=True)
+    book_date = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=50)  # '예약 완료', '취소됨' 등
+
 
 class RentalRecord(models.Model):
     rental_id = models.AutoField(primary_key=True)

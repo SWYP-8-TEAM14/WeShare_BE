@@ -19,6 +19,11 @@ environ = "^1.0"
 requests = "^2.32.3"
 django-extensions = "^3.2.3"
 django-restframework = "^0.0.1"
+django-cors-headers = "^4.7.0"
+drf-dynamic-fields = "^0.4.0"
+gunicorn = "^23.0.0"
+pytest = "^8.3.4"
+pytest-django = "^4.10.0"
 
 
 [build-system]
