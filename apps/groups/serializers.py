@@ -1,13 +1,13 @@
 from rest_framework import serializers
-from .models import Group, GroupMember
+from apps.groups.models import Group, GroupMember
 
 
 class GroupSerializer(serializers.ModelSerializer):
-    member_count = serializers.SerializerMethodField()
+    member_count = serializers.IntegerField()
 
     class Meta:
         model = Group
-        fields = ["group_id", "group_name", "group_image", "member_count"]
+        fields = ["group_id", "group_name", "group_image", "group_description", "member_count"]
 
         def get_member_count(self, obj):
             return GroupMember.objects.filter(group=obj).count()
