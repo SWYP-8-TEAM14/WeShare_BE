@@ -73,4 +73,4 @@ class User(BaseModel, AbstractUser, PermissionsMixin):
         verbose_name_plural = "유저정보"
 
     def __str__(self) -> str:
-        return self.username
+        return self.email

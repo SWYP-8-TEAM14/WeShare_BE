@@ -12,8 +12,11 @@ class GroupListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = Group.objects.filter(members__user=self.request.user)
+        created_by_me = self.request.GET.get('created_by_me')
+        print("created_by_me", created_by_me)
         if self.request.GET.get("created_by_me") == "true":
             queryset = queryset.filter(group_admin=self.request.user)
+            print("내가 만든 그룹 개수: ", queryset.count())
         return queryset
 
 

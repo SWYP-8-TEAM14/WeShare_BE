@@ -10,6 +10,7 @@ urlpatterns = [
 
     # apps
     path("api/v1/users/", include("apps.users.urls")),
+    path("api/v1/groups/", include("apps.groups.urls")),
     path('api/v1/shared/', include('apps.shared.urls')),
 
     # Swagger 및 API 문서

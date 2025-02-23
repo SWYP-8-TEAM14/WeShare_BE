@@ -10,7 +10,7 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = ["group_id", "group_name", "group_image", "member_count"]
 
         def get_member_count(self, obj):
-            return obj.members.count()
+            return GroupMember.objects.filter(group=obj).count()
 
 
 class GroupCreateSerializer(serializers.ModelSerializer):
