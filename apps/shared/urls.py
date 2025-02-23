@@ -1,7 +1,8 @@
 from django.urls import path, include
-from .views import ItemView, ItemDetailView, ItemReservationsView, ItemReservationsListView, ItemPickupView, ItemReturnView, ItemReturnListView
+from .views import ItemAddView, ItemView, ItemDetailView, ItemReservationsView, ItemReservationsListView, ItemPickupView, ItemReturnView, ItemReturnListView
 
 urlpatterns = [
+    path("items/add", ItemAddView.as_view()),
     path("items/", ItemView.as_view()),
     path("items/detail/", ItemDetailView.as_view()),
     path("items/reservations/", ItemReservationsView.as_view()),

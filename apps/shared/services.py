@@ -1,9 +1,21 @@
 from .models import Item, Reservation, RentalRecord, RentalRequest
-from .serializers import ItemSerializer, ReservationSerializer, RentalRecordSerializer
+from .serializers import ItemAddSerializer, ItemSerializer, ItemDetailSerializer, ItemReservationsSerializer, ItemReservationsListSerializer, ItemPickupSerializer, ItemReturnSerializer, ItemReturnListSerializer
 
 class ItemService:
-    def get_item_list(self, user_id):
-        item_list = Item.objects.filter(user_id=user_id)
+    
+    @staticmethod
+    def put_item(data):
+        serializer = ItemAddSerializer(data=data)
+
+        if serializer.is_valid(raise_exception=True):
+            item = serializer.save()
+            return ItemAddSerializer(item).data
+        
+        return {"errors": serializer.errors}
+
+    @staticmethod
+    def get_item_list(data):
+        item_list = Item.objects.filter(user_id=data['user_id'])
 
         if not item_list.exists():
             return None
@@ -11,8 +23,9 @@ class ItemService:
         return ItemSerializer(item_list, many=True).data
     
 
-    def get_item_detail(self, user_id):
-        item = Item.objects.filter(user_id=user_id)
+    @staticmethod
+    def get_item_detail(data):
+        item = Item.objects.filter(user_id=data['user_id'])
 
         if not item.exists():
             return None
@@ -20,8 +33,9 @@ class ItemService:
         return ItemSerializer(item, many=True).data
     
 
-    def item_reservations(self, user_id):
-        item = Item.objects.filter(user_id=user_id)
+    @staticmethod
+    def item_reservations(data):
+        item = Item.objects.filter(user_id=data['user_id'])
 
         if not item.exists():
             return None
@@ -29,8 +43,9 @@ class ItemService:
         return ItemSerializer(item, many=True).data
     
     
-    def get_item_reservations_list(self, user_id):
-        item = Item.objects.filter(user_id=user_id)
+    @staticmethod
+    def get_item_reservations_list(data):
+        item = Item.objects.filter(user_id=data['user_id'])
 
         if not item.exists():
             return None
@@ -38,8 +53,9 @@ class ItemService:
         return ItemSerializer(item, many=True).data
     
 
-    def item_pickup(self, user_id):
-        item = Item.objects.filter(user_id=user_id)
+    @staticmethod
+    def item_pickup(data):
+        item = Item.objects.filter(user_id=data['user_id'])
 
         if not item.exists():
             return None
@@ -47,8 +63,9 @@ class ItemService:
         return ItemSerializer(item, many=True).data
     
 
-    def item_return(self, user_id):
-        item = Item.objects.filter(user_id=user_id)
+    @staticmethod
+    def item_return(data):
+        item = Item.objects.filter(user_id=data['user_id'])
 
         if not item.exists():
             return None
@@ -56,8 +73,9 @@ class ItemService:
         return ItemSerializer(item, many=True).data
     
 
-    def get_item_return_list(self, user_id):
-        item = Item.objects.filter(user_id=user_id)
+    @staticmethod
+    def get_item_return_list(data):
+        item = Item.objects.filter(user_id=data['user_id'])
 
         if not item.exists():
             return None

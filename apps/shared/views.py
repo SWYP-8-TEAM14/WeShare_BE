@@ -5,9 +5,58 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from .services import ItemService
 
+# /api/v1/shared/items
+class ItemAddView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="물품 등록"
+        , description="신규 물품을 등록합니다."
+        , responses={200: "Reservation List", 400: "400 Error"}
+    )
+    def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
+        if not request.data['user']:
+            return Response({"error": "user 필요합니다."}, status=400)
+        
+        if not request.data['group_id']:
+            return Response({"error": "group_id가 필요합니다."}, status=400)
+        
+        if not request.data['item_name']:
+            return Response({"error": "item_name가 필요합니다."}, status=400)
+        
+        if not request.data['item_description']:
+            return Response({"error": "item_description가 필요합니다."}, status=400)
+        
+        if not request.data['item_image']:
+            return Response({"error": "item_image가 필요합니다."}, status=400)
+        
+        if not request.data['status']:
+            if request.data['status'] is not 0:
+                return Response({"error": "status가 필요합니다."}, status=400)
+        
+        if not request.data['quantity']:
+            return Response({"error": "quantity가 필요합니다."}, status=400)
+        
+        if not request.data['caution']:
+            return Response({"error": "caution가 필요합니다."}, status=400)
+        
+        if not request.data['created_at']:
+            return Response({"error": "created_at가 필요합니다."}, status=400)
+        
+        if not request.data['deleted_at']:
+            return Response({"error": "deleted_at가 필요합니다."}, status=400)
+
+        item_data = ItemService.put_item(request.data)
+        return Response(item_data, status=200 if "errors" not in item_data else 400)
+
+
+
+# /api/v1/shared/items
 class ItemView(APIView):
     permission_classes = [AllowAny]
 
@@ -17,11 +66,18 @@ class ItemView(APIView):
         , responses={200: "Reservation List", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
         if not request.data['user_id']:
             return Response({"error": "user_id가 필요합니다."}, status=400)
 
-        return Response(ItemService.get_item_list(request.data['user_id']), status=200)
+        return Response(ItemService.get_item_list(request.data), status=200)
 
+
+
+
+# /api/v1/shared/items/detail
 class ItemDetailView(APIView):
     permission_classes = [AllowAny]
 
@@ -31,12 +87,23 @@ class ItemDetailView(APIView):
         , responses={200: "Reservation List", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
         if not request.data['user_id']:
             return Response({"error": "user_id가 필요합니다."}, status=400)
+        
+        if not request.data['item_id']:
+            return Response({"error": "item_id가 필요합니다."}, status=400)
 
-        return Response(ItemService.get_item_detail(request.data['user_id']), status=200)
+
+        return Response(ItemService.get_item_detail(request.data), status=200)
 
 
+
+
+
+# /api/v1/shared/items/reservations
 class ItemReservationsView(APIView):
     permission_classes = [AllowAny]
 
@@ -46,11 +113,27 @@ class ItemReservationsView(APIView):
         , responses={200: "Reservation List", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
         if not request.data['user_id']:
             return Response({"error": "user_id가 필요합니다."}, status=400)
+        
+        if not request.data['item_id']:
+            return Response({"error": "item_id가 필요합니다."}, status=400)
+        
+        if not request.data['start_time']:
+            return Response({"error": "start_time이 필요합니다."}, status=400)
+        
+        if not request.data['end_time']:
+            return Response({"error": "end_time이 필요합니다."}, status=400)
 
-        return Response(ItemService.item_reservations(request.data['user_id']), status=200)
+        return Response(ItemService.item_reservations(request.data), status=200)
 
+
+
+
+# /api/v1/shared/items/reservations/list
 class ItemReservationsListView(APIView):
     permission_classes = [AllowAny]
 
@@ -60,11 +143,15 @@ class ItemReservationsListView(APIView):
         , responses={200: "Reservation List", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
-        if not request.data['user_id']:
-            return Response({"error": "user_id가 필요합니다."}, status=400)
+        # if not request.data['user_id']:
+        #     return Response({"error": "user_id가 필요합니다."}, status=400)
 
-        return Response(ItemService.get_item_reservations_list(request.data['user_id']), status=200)
+        return Response(ItemService.get_item_reservations_list(request.data), status=200)
     
+    
+    
+    
+# /api/v1/shared/items/pickup
 class ItemPickupView(APIView):
     permission_classes = [AllowAny]
 
@@ -74,11 +161,27 @@ class ItemPickupView(APIView):
         , responses={200: "Reservation List", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
         if not request.data['user_id']:
             return Response({"error": "user_id가 필요합니다."}, status=400)
+        
+        if not request.data['item_id']:
+            return Response({"error": "item_id가 필요합니다."}, status=400)
+        
+        if not request.data['pickup_time']:
+            return Response({"error": "pickup_time이 필요합니다."}, status=400)
+        
+        if not request.data['image']:
+            return Response({"error": "image가 필요합니다."}, status=400)
 
-        return Response(ItemService.item_pickup(request.data['user_id']), status=200)
-    
+        return Response(ItemService.item_pickup(request.data), status=200)
+
+
+
+
+# /api/v1/shared/items/return/list
 class ItemReturnView(APIView):
     permission_classes = [AllowAny]
 
@@ -88,11 +191,18 @@ class ItemReturnView(APIView):
         , responses={200: "Reservation List", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
         if not request.data['user_id']:
             return Response({"error": "user_id가 필요합니다."}, status=400)
 
-        return Response(ItemService.item_return(request.data['user_id']), status=200)
+        return Response(ItemService.item_return(request.data), status=200)
 
+
+
+
+    # /api/v1/shared/items/return
 class ItemReturnListView(APIView):
     permission_classes = [AllowAny]
 
@@ -102,7 +212,19 @@ class ItemReturnListView(APIView):
         , responses={200: "Reservation List", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
         if not request.data['user_id']:
             return Response({"error": "user_id가 필요합니다."}, status=400)
+        
+        if not request.data['item_id']:
+            return Response({"error": "item_id가 필요합니다."}, status=400)
+        
+        if not request.data['return_time']:
+            return Response({"error": "return_time이 필요합니다."}, status=400)
+        
+        if not request.data['return_image']:
+            return Response({"error": "return_image이 필요합니다."}, status=400)
 
-        return Response(ItemService.get_item_return_list(request.data['user_id']), status=200)
+        return Response(ItemService.get_item_return_list(request.data), status=200)
