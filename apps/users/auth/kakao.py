@@ -29,8 +29,6 @@ class KakaoLoginView(APIView):
         return Response({"auth_url": kakao_auth_url}, status=status.HTTP_200_OK)
 
 
-logger = logging.getLogger(__name__)
-
 @method_decorator(csrf_exempt, name="dispatch")
 class KakaoCallbackView(APIView):
     permission_classes = [AllowAny]
@@ -39,9 +37,12 @@ class KakaoCallbackView(APIView):
         description="카카오 로그인 콜백 처리",
         responses={200: "사용자 정보 반환", 400: "Authorization code is missing"},
     )
+    def get(self, request: Request) -> Response:
+        # GET 요청에서도 query_params로 인가 코드를 추출할 수 있습니다.
+        return self.post(request)
+
     def post(self, request: Request) -> Response:
-        logger.info(f"Received callback request with params: {request.query_params}")
-        code = request.query_params.get("code")
+        code = request.data.get("code") or request.query_params.get("code")
         if not code:
             return Response({"error": "Authorization code is missing"}, status=400)
 

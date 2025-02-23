@@ -67,6 +67,14 @@ class KakaoLoginSerializer(serializers.ModelSerializer[User]):
     def create(self, validated_data: dict[str, Any]) -> User:
         return User.objects.create_user(**validated_data)
 
+class NaverLoginSerializer(serializers.ModelSerializer[User]):
+    class Meta:
+        model = User
+        fields = ["email", "username"]
+
+    def create(self, validated_data: dict[str, Any]) -> User:
+        return User.objects.create_user(**validated_data)
+
 
 class LoginSerializer(serializers.Serializer):  # type: ignore
     username = serializers.CharField()

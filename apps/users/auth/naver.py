@@ -4,6 +4,7 @@ import requests
 from django.http import HttpRequest, HttpResponse
 from django.utils.crypto import get_random_string
 from django.views.generic import RedirectView
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -12,6 +13,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.users.models import User
+from apps.users.serializers import NaverLoginSerializer
 from config.settings.base import env
 
 # from typing import Any, cast
@@ -23,15 +25,16 @@ NAVER_STATE = "naver_login"
 NAVER_LOGIN_URL = "https://nid.naver.com/oauth2.0/authorize"
 
 
-class NaverLoginView(RedirectView):
+class NaverLoginView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        state = get_random_string(32)
+    @extend_schema(request=NaverLoginSerializer, responses={200: "Success"})
+    def get(self, request: Request, state=None) -> Response:
         naver_login_url = (
             f"https://nid.naver.com/oauth2.0/authorize?"
             f"response_type=code&client_id={env('NAVER_CLIENT_ID')}"
             f"&redirect_uri={env('NAVER_REDIRECT_URI')}&state={state}"
+            f"response_type=code"
         )
         return Response({"naver_login_url": naver_login_url}, status=status.HTTP_200_OK)
 
@@ -46,7 +49,6 @@ class NaverCallbackView(APIView):
         if not code:
             return Response({"error": "Authorization code is missing"}, status=400)
         state = request.GET.get("state")
-        print(f"🔹 Received State: '{state}'")
 
         # 액세스 토큰 요청
         token_url = (

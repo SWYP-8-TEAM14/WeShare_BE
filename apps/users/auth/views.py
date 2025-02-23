@@ -59,7 +59,7 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             print("데이터 검증 성공")
-            user = serializer.validated_data["user"]  # ✅ 여기서 올바르게 `user` 가져오기
+            user = serializer.validated_data["user"]  # 여기서 올바르게 `user` 가져오기
 
             refresh = RefreshToken.for_user(user)
             return Response(
@@ -70,7 +70,7 @@ class LoginView(APIView):
                 status=status.HTTP_200_OK,
             )
         else:
-            print("❌ 데이터 검증 실패:", serializer.errors)  # 🔍 데이터 검증 실패 확인
+            print("데이터 검증 실패:", serializer.errors)  # 데이터 검증 실패 확인
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
