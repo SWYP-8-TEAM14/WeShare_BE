@@ -1,56 +1,230 @@
-from rest_framework import viewsets
-from rest_framework.decorators import action
+import requests
+from drf_spectacular.utils import extend_schema
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from .services import ItemService
 
-from .models import Item, RentalRecord, Reservation
-from .serializers import ItemSerializer, RentalRecordSerializer, ReservationSerializer
+# /api/v1/shared/items
+class ItemAddView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="물품 등록"
+        , description="신규 물품을 등록합니다."
+        , responses={200: "Reservation List", 400: "400 Error"}
+    )
+    def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
+        if not request.data['user']:
+            return Response({"error": "user 필요합니다."}, status=400)
+        
+        if not request.data['group_id']:
+            return Response({"error": "group_id가 필요합니다."}, status=400)
+        
+        if not request.data['item_name']:
+            return Response({"error": "item_name가 필요합니다."}, status=400)
+        
+        if not request.data['item_description']:
+            return Response({"error": "item_description가 필요합니다."}, status=400)
+        
+        if not request.data['item_image']:
+            return Response({"error": "item_image가 필요합니다."}, status=400)
+        
+        if not request.data['status']:
+            if request.data['status'] is not 0:
+                return Response({"error": "status가 필요합니다."}, status=400)
+        
+        if not request.data['quantity']:
+            return Response({"error": "quantity가 필요합니다."}, status=400)
+        
+        if not request.data['caution']:
+            return Response({"error": "caution가 필요합니다."}, status=400)
+        
+        if not request.data['created_at']:
+            return Response({"error": "created_at가 필요합니다."}, status=400)
+        
+        if not request.data['deleted_at']:
+            return Response({"error": "deleted_at가 필요합니다."}, status=400)
+
+        item_data = ItemService.put_item(request.data)
+        return Response(item_data, status=200 if "errors" not in item_data else 400)
 
 
-class ItemViewSet(viewsets.ModelViewSet):
-    queryset = Item.objects.all()
-    serializer_class = ItemSerializer
 
-    @action(detail=True, methods=["post"])
-    def reserve(self, request, pk=None):
-        """물품 예약 API"""
-        item = self.get_object()
-        user_id = request.data.get("user_id")
-        start_time = request.data.get("start_time")
-        end_time = request.data.get("end_time")
+# /api/v1/shared/items
+class ItemView(APIView):
+    permission_classes = [AllowAny]
 
-        reservation = Reservation.objects.create(user_id=user_id, item=item, book_date=start_time, status="예약 완료")
-        return Response(ReservationSerializer(reservation).data)
+    @extend_schema(
+        summary="물품 리스트 조회"
+        , description="전체 물품 리스트를 조회합니다."
+        , responses={200: "Reservation List", 400: "400 Error"}
+    )
+    def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
+        if not request.data['user_id']:
+            return Response({"error": "user_id가 필요합니다."}, status=400)
 
-
-class ReservationViewSet(viewsets.ModelViewSet):
-    queryset = Reservation.objects.all()
-    serializer_class = ReservationSerializer
-
-    @action(detail=False, methods=["post"])
-    def user_reservations(self, request):
-        """사용자의 예약 목록 조회"""
-        user_id = request.data.get("user_id")
-        reservations = Reservation.objects.filter(user_id=user_id)
-        return Response(ReservationSerializer(reservations, many=True).data)
+        return Response(ItemService.get_item_list(request.data), status=200)
 
 
-class RentalRecordViewSet(viewsets.ModelViewSet):
-    queryset = RentalRecord.objects.all()
-    serializer_class = RentalRecordSerializer
 
-    @action(detail=True, methods=["post"])
-    def pickup(self, request, pk=None):
-        """픽업 인증 API"""
-        rental = self.get_object()
-        rental.rental_status = "대여 중"
-        rental.save()
-        return Response(RentalRecordSerializer(rental).data)
 
-    @action(detail=True, methods=["post"])
-    def return_item(self, request, pk=None):
-        """반납 인증 API"""
-        rental = self.get_object()
-        rental.rental_status = "반납 완료"
-        rental.actual_return = request.data.get("return_time")
-        rental.save()
-        return Response(RentalRecordSerializer(rental).data)
+# /api/v1/shared/items/detail
+class ItemDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="물품 상세 조회"
+        , description="특정 물품에 대한 상세 정보를 조회합니다."
+        , responses={200: "Reservation List", 400: "400 Error"}
+    )
+    def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
+        if not request.data['user_id']:
+            return Response({"error": "user_id가 필요합니다."}, status=400)
+        
+        if not request.data['item_id']:
+            return Response({"error": "item_id가 필요합니다."}, status=400)
+
+
+        return Response(ItemService.get_item_detail(request.data), status=200)
+
+
+
+
+
+# /api/v1/shared/items/reservations
+class ItemReservationsView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="물품 예약"
+        , description="물품을 예약 합니다."
+        , responses={200: "Reservation List", 400: "400 Error"}
+    )
+    def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
+        if not request.data['user_id']:
+            return Response({"error": "user_id가 필요합니다."}, status=400)
+        
+        if not request.data['item_id']:
+            return Response({"error": "item_id가 필요합니다."}, status=400)
+        
+        if not request.data['start_time']:
+            return Response({"error": "start_time이 필요합니다."}, status=400)
+        
+        if not request.data['end_time']:
+            return Response({"error": "end_time이 필요합니다."}, status=400)
+
+        return Response(ItemService.item_reservations(request.data), status=200)
+
+
+
+
+# /api/v1/shared/items/reservations/list
+class ItemReservationsListView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="사용자 물품 조회"
+        , description="사용자가 예약한 물품을 조회합니다."
+        , responses={200: "Reservation List", 400: "400 Error"}
+    )
+    def post(self, request: Request) -> Response:
+        # if not request.data['user_id']:
+        #     return Response({"error": "user_id가 필요합니다."}, status=400)
+
+        return Response(ItemService.get_item_reservations_list(request.data), status=200)
+    
+    
+    
+    
+# /api/v1/shared/items/pickup
+class ItemPickupView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="물품 픽업"
+        , description="사용자가 예약한 물품을 픽업합니다."
+        , responses={200: "Reservation List", 400: "400 Error"}
+    )
+    def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
+        if not request.data['user_id']:
+            return Response({"error": "user_id가 필요합니다."}, status=400)
+        
+        if not request.data['item_id']:
+            return Response({"error": "item_id가 필요합니다."}, status=400)
+        
+        if not request.data['pickup_time']:
+            return Response({"error": "pickup_time이 필요합니다."}, status=400)
+        
+        if not request.data['image']:
+            return Response({"error": "image가 필요합니다."}, status=400)
+
+        return Response(ItemService.item_pickup(request.data), status=200)
+
+
+
+
+# /api/v1/shared/items/return/list
+class ItemReturnView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="물품 반납"
+        , description="사용자가 대여한 물품을 반납합니다."
+        , responses={200: "Reservation List", 400: "400 Error"}
+    )
+    def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
+        if not request.data['user_id']:
+            return Response({"error": "user_id가 필요합니다."}, status=400)
+
+        return Response(ItemService.item_return(request.data), status=200)
+
+
+
+
+    # /api/v1/shared/items/return
+class ItemReturnListView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="물품 반납 조회"
+        , description="사용자가 반납한 물품을 조회합니다."
+        , responses={200: "Reservation List", 400: "400 Error"}
+    )
+    def post(self, request: Request) -> Response:
+        if not request.data:
+            return Response({"error": "request.data가 필요합니다."}, status=400)
+        
+        if not request.data['user_id']:
+            return Response({"error": "user_id가 필요합니다."}, status=400)
+        
+        if not request.data['item_id']:
+            return Response({"error": "item_id가 필요합니다."}, status=400)
+        
+        if not request.data['return_time']:
+            return Response({"error": "return_time이 필요합니다."}, status=400)
+        
+        if not request.data['return_image']:
+            return Response({"error": "return_image이 필요합니다."}, status=400)
+
+        return Response(ItemService.get_item_return_list(request.data), status=200)
