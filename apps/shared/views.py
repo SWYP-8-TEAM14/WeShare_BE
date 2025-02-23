@@ -36,7 +36,7 @@ class ItemAddView(APIView):
             return Response({"error": "item_image가 필요합니다."}, status=400)
         
         if not request.data['status']:
-            if request.data['status'] is not 0:
+            if request.data['status'] != 0:
                 return Response({"error": "status가 필요합니다."}, status=400)
         
         if not request.data['quantity']:

@@ -39,7 +39,7 @@ class ItemReservationsListSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ItemPickupSerializer(serializers.ModelSerializer):
-        class Meta:
+    class Meta:
         model = Item
         fields = '__all__'
 
