@@ -1,23 +1,35 @@
 import os
+from datetime import timedelta
 from pathlib import Path
+from typing import Any, Dict, List
 
-from dotenv import load_dotenv
+import environ
 
-load_dotenv()  # 🔥 `.env` 파일 로드
-SECRET_KEY = os.getenv("SECRET_KEY")
+env = environ.Env(DEBUG=(bool, False))
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# environ.Env.read_env()
+env_path = os.path.join(BASE_DIR, "envs/.env.local")
+if os.path.exists(env_path):
+    environ.Env.read_env(env_path)
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = env("SECRET_KEY")
+ALLOWED_HOSTS: list[str] = ["*"]
 
 # Application definition
 DJANGO_APPS = [
+    "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "apps.shared",
 ]
 
 THIRD_PARTY = [
@@ -28,13 +40,11 @@ THIRD_PARTY = [
 
 OWN_APPS = [
     "apps.users",
+    "apps.groups",
 ]
 
 BASE_INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY + OWN_APPS
 
-REST_FRAMEWORK = {
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-}
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "WeShare API",
@@ -43,9 +53,10 @@ SPECTACULAR_SETTINGS = {
 }
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -53,6 +64,19 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
+
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "https://kauth.kakao.com",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    # "http://localhost:3000",
+    # "https://weshare.com",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = ["https://kauth.kakao.com", "http://127.0.0.1:8000", "http://localhost:8000"]
 
 TEMPLATES = [
     {
@@ -103,3 +127,37 @@ USE_TZ = True
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK: Dict[str, Any] = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",
+    ],
+}
+
+AUTHENTICATION_BACKENDS = [
+    "apps.users.auth_backends.EmailBackend",
+    "django.contrib.auth.backends.ModelBackend",  # 기본 인증 방식
+]
+
+
+# NCP_STORAGE = {
+#     "ACCESS_KEY": env("NCP_ACCESS_KEY"),
+#     "SECRET_KEY": env("NCP_SECRET_KEY"),
+#     "BUCKET_NAME": "sharing_photos",
+#     "ENDPOINT_URL": "https://kr.object.ncloudstorage.com",
+# }
+#
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",
+}

@@ -25,9 +25,26 @@ DATABASES = {
     }
 }
 
+SWAGGER_SETTINGS = {
+    "USE_SESSION_AUTH": False,
+    "DEFAULT_API_URL": "http://127.0.0.1:8000/",  # HTTPS URL로 명시
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {  # JWT 인증 방식 정의
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"',
+        },
+    },
+}
+
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "static/"
 
 NAVER_CLIENT_ID = ENV.get("NAVER_CLIENT_ID")
 NAVER_SECRET = ENV.get("NAVER_CLIENT_SECRET")
 NAVER_REDIRECT_URI = ENV.get("NAVER_REDIRECT_URI")
+
+KAKAO_CLIENT_ID = ENV.get("KAKAO_CLIENT_ID")
+KAKAO_SECRET = ENV.get("KAKAO_CLIENT_SECRET")
+KAKAO_REDIRECT_URI = ENV.get("KAKAO_REDIRECT_URI")
