@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Item, Reservation, RentalRequest, RentalRecord
+from .models import Item, Reservation, RentalRequest, RentalRecord, User
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "profile_image", "created_at", "updated_at"]
+        read_only_fields = ["id", "email"]
 
 class ItemAddSerializer(serializers.ModelSerializer):
     class Meta:

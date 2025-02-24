@@ -7,6 +7,19 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .services import ItemService
 
+# /api/v1/shared/users
+class UserAddView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="신규 인원 추가 테스트"
+        , description="신규 인원 추가 테스트"
+        , responses={200: "Success", 400: "400 Error"}
+    )
+    def post(self, request: Request) -> Response:
+        item_data = ItemService.put_item(request.data)
+        return Response(item_data, status=200 if "errors" not in item_data else 400)
+
 # /api/v1/shared/items
 class ItemAddView(APIView):
     permission_classes = [AllowAny]
@@ -14,7 +27,7 @@ class ItemAddView(APIView):
     @extend_schema(
         summary="물품 등록"
         , description="신규 물품을 등록합니다."
-        , responses={200: "Reservation List", 400: "400 Error"}
+        , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
         if not request.data:
@@ -63,7 +76,7 @@ class ItemView(APIView):
     @extend_schema(
         summary="물품 리스트 조회"
         , description="전체 물품 리스트를 조회합니다."
-        , responses={200: "Reservation List", 400: "400 Error"}
+        , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
         if not request.data:
@@ -84,7 +97,7 @@ class ItemDetailView(APIView):
     @extend_schema(
         summary="물품 상세 조회"
         , description="특정 물품에 대한 상세 정보를 조회합니다."
-        , responses={200: "Reservation List", 400: "400 Error"}
+        , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
         if not request.data:
@@ -110,7 +123,7 @@ class ItemReservationsView(APIView):
     @extend_schema(
         summary="물품 예약"
         , description="물품을 예약 합니다."
-        , responses={200: "Reservation List", 400: "400 Error"}
+        , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
         if not request.data:
@@ -140,7 +153,7 @@ class ItemReservationsListView(APIView):
     @extend_schema(
         summary="사용자 물품 조회"
         , description="사용자가 예약한 물품을 조회합니다."
-        , responses={200: "Reservation List", 400: "400 Error"}
+        , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
         # if not request.data['user_id']:
@@ -158,7 +171,7 @@ class ItemPickupView(APIView):
     @extend_schema(
         summary="물품 픽업"
         , description="사용자가 예약한 물품을 픽업합니다."
-        , responses={200: "Reservation List", 400: "400 Error"}
+        , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
         if not request.data:
@@ -188,7 +201,7 @@ class ItemReturnView(APIView):
     @extend_schema(
         summary="물품 반납"
         , description="사용자가 대여한 물품을 반납합니다."
-        , responses={200: "Reservation List", 400: "400 Error"}
+        , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
         if not request.data:
@@ -209,7 +222,7 @@ class ItemReturnListView(APIView):
     @extend_schema(
         summary="물품 반납 조회"
         , description="사용자가 반납한 물품을 조회합니다."
-        , responses={200: "Reservation List", 400: "400 Error"}
+        , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
         if not request.data:
