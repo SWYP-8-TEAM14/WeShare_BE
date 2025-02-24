@@ -1,12 +1,15 @@
 from django.db import models
+
+from apps.groups.models import Group
 from apps.users.models import User
 
 
 class Item(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='items')
     item_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     # group_id = models.ForeignKey(Group, on_delete=models.CASCADE)
-    group_id = models.IntegerField()
+    # group_id = models.IntegerField()
     item_name = models.CharField(max_length=255)
     item_description = models.TextField(null=True, blank=True)
     item_image = models.TextField(null=True, blank=True)
