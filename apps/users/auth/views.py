@@ -22,14 +22,13 @@ from config.settings.base import env
 
 
 class HomeView(APIView):
+    """ WeShare 홈 화면 API """
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request) -> Response:
-        return Response(
-            {
-                "message": "WeShare 홈 접속 성공",
-            }
-        )
+        user = request.user
+
+        # 가입된 그룹 ID 목록 가져오기
 
 
 class SignupView(APIView):

@@ -1,5 +1,3 @@
-from itertools import chain
-
 from django.db.models import Count
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import generics, status
@@ -28,14 +26,31 @@ class GroupListView(generics.ListAPIView):
             )
         ]
     )
-    def get_queryset(self):
-        user = self.request.user
-        joined_groups = Group.objects.filter(members__user=user).annotate(member_count=Count("members"))
-        other_groups = Group.objects.exclude(group_id__in=joined_groups.values_list("group_id", flat=True)).annotate(
-            member_count=Count("members"))
+    def get(self, request):
+        user = request.user
 
-        queryset = list(chain(joined_groups, other_groups))
-        return queryset
+        # 내가 가입한 그룹 가져오기
+        joined_groups = Group.objects.filter(members__user=user).annotate(member_count=Count("members"))
+
+        # 내가 만든 그룹 가져오기
+        created_groups = Group.objects.filter(group_admin=user).annotate(member_count=Count("members"))
+
+
+        # 내가 만든 그룹만 보기(created_by_me=true)
+        if request.GET.get("created_by_me") == "true":
+            queryset = list(created_groups)
+        else:
+            queryset = list(joined_groups) + list(created_groups)
+
+        # 정렬 옵션 적용
+        sort_option = request.GET.get("sort", "default")
+        if sort_option == "members":
+            queryset.sort(key=lambda x: x.member_count, reverse=True)
+        else:
+            queryset.sort(key=lambda x: x.created_at, reverse=True)
+
+        data = GroupSerializer(queryset, many=True).data
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class GroupDetailView(generics.RetrieveAPIView):
@@ -59,8 +74,15 @@ class GroupDetailView(generics.RetrieveAPIView):
         # 유저가 이 그룹에 가입했는지 확인
         is_member = GroupMember.objects.filter(user=user, group=group).exists()
 
-        # 유저가 그룹장인지 확인
+        # 유저가 그룹장인지 확인(그룹장만 그룹 관리 버튼이 보임)
         is_admin = group.group_admin == user
+        print(f"🔍 [DEBUG] user: {user.email} / is_member: {is_member} / is_admin: {is_admin}")
+
+        # 공유 물품 리스트는 가입한 사용자만 볼 수 있음
+        shared_items_data = []
+        if is_member:
+            shared_items = list(Item.objects.filter(group=group))
+            shared_items_data = ItemSerializer(shared_items, many=True).data
 
         data = GroupSerializer(group).data
         data['is_member'] = is_member
@@ -81,7 +103,8 @@ class GroupManageView(APIView):
             return Response({"message" : "해당 그룹이 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND)
 
         # 그룹장인지 확인(편집 권한 여부)
-        is_admin = group.group_admin == user
+        if group.group_admin != user:
+            return Response({"message" : "그룹 관리자만 접근 가능합니다."}, status=status.HTTP_403_FORBIDDEN)
 
         # 그룹 멤버 리스트 (4명까지만 표시)
         members = list(GroupMember.objects.filter(group=group)[:4])
@@ -94,7 +117,7 @@ class GroupManageView(APIView):
         total_shared_items = Item.objects.filter(group=group).count()
 
         data = GroupSerializer(group).data
-        data['is_admin'] = is_admin
+        data['is_admin'] = True
         data['members'] = members_data
         data['total_members'] = total_members
         data['shared_items'] = shared_items_data

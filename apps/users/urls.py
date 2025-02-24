@@ -15,12 +15,14 @@ from .auth.views import (
 from .views import UserView
 
 urlpatterns = [
-    path("user/", UserView.as_view()),
+    path("", HomeView.as_view(), name="home"),
     path("login/", LoginView.as_view()),
     path("signup/", SignupView.as_view(), name="signup"),
     path("patch/", UserUpdateView.as_view(), name="user-update"),
     path("delete/", UserDeleteView.as_view(), name="user-delete"),
     path("logout/", LogoutView.as_view(), name="logout"),
+
+    # 소셜로그인
     path("user/auth/kakao/login/", KakaoLoginView.as_view(), name="kakao-login"),
     path("user/auth/kakao/login/callback/", KakaoCallbackView.as_view(), name="kakao-callback"),
     path("user/auth/naver/login/", NaverLoginView.as_view(), name="naver-login"),
