@@ -34,7 +34,7 @@ class HomeView(APIView):
         joined_groups = GroupMember.objects.filter(user=user).values_list("group_id", flat=True)
 
         available_items = (
-            Item.objects.filter(group_id__in=joined_groups, status="available")
+            Item.objects.filter(group_id__in=joined_groups, status=1)
             .order_by("-created_at")[:4]
         )
         available_items_data = [{"id": item.id, "name": item.item_name, "group": item.group.group_name} for item in available_items]
@@ -72,52 +72,6 @@ class SignupView(APIView):
 
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
-
-    @extend_schema(
-        tags=["user"],
-        summary="User Login",
-        description="Login with email and password to get access and refresh tokens",
-        request=LoginSerializer,
-        examples=[
-            OpenApiExample(
-                "Login Example",
-                value={"email": "user@example.com", "password": "string"},
-                request_only=True,
-            )
-        ],
-        responses={
-            200: {
-                "type": "object",
-                "properties": {
-                    "message": {"type": "string"},
-                    "access_token": {"type": "string"},
-                    "refresh_token": {"type": "string"},
-                    "user_id": {"type": "integer"},
-                },
-            }
-        },
-    )
-    def validate(self, attrs):
-        email = attrs.get("email")
-        password = attrs.get("password")
-
-        # `authenticate`에서 `email`을 사용하여 사용자 검증
-        user = authenticate(email=email, password=password)
-
-        if not user:
-            raise serializers.ValidationError("유효하지 않은 자격 증명입니다.")
-
-        # JWT 토큰 생성 (super() 호출)
-        data = super().validate(attrs)
-        data["message"] = "로그인 성공"
-        data["user_id"] = user.id
-
-        return data
-
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        token["email"] = user.email  # 추가 정보 포함 가능
 
 
 class LogoutView(APIView):
