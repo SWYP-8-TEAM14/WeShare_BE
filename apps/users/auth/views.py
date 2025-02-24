@@ -11,6 +11,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from apps.groups.models import GroupMember
+from apps.shared.models import Item
 from apps.users import serializers
 from apps.users.models import User
 from apps.users.serializers import (
@@ -23,12 +25,32 @@ from config.settings.base import env
 
 class HomeView(APIView):
     """ WeShare 홈 화면 API """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request: Request) -> Response:
         user = request.user
 
         # 가입된 그룹 ID 목록 가져오기
+        joined_groups = GroupMember.objects.filter(user=user).values_list("group_id", flat=True)
+
+        available_items = (
+            Item.objects.filter(group_id__in=joined_groups, status="available")
+            .order_by("-created_at")[:4]
+        )
+        available_items_data = [{"id": item.id, "name": item.item_name, "group": item.group.group_name} for item in available_items]
+
+        response_data = {
+            "message": "WeShare 홈 접속 성공",
+            "buttons": {
+                "reservation": "/api/v1/shared/items/reservations/",
+                "pickup": "/api/v1/shared/items/pickup/",
+                "return": "/api/v1/shared/items/return/",
+            },
+            "available_items": available_items_data,
+            "tabs": ["홈", "내 그룹", "공유물품", "마이페이지"],
+        }
+
+        return Response(response_data, status=200)
 
 
 class SignupView(APIView):

@@ -10,7 +10,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 
     # apps
-    path("api/v1/home/", HomeView.as_view(), name="home"),
+    path("", HomeView.as_view(), name="home"),
+    path("home/", HomeView.as_view(), name="home"),
     path("api/v1/users/", include("apps.users.urls")),
     path("api/v1/groups/", include("apps.groups.urls")),
     path('api/v1/shared/', include('apps.shared.urls')),

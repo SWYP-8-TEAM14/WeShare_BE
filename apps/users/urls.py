@@ -16,6 +16,7 @@ from .views import UserView
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
+    path("home/", HomeView.as_view(), name="home"),
     path("login/", LoginView.as_view()),
     path("signup/", SignupView.as_view(), name="signup"),
     path("patch/", UserUpdateView.as_view(), name="user-update"),
