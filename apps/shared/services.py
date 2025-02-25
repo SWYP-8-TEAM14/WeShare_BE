@@ -1,8 +1,18 @@
 from .models import Item, Reservation, RentalRecord, RentalRequest
-from .serializers import ItemAddSerializer, ItemSerializer, ItemDetailSerializer, ItemReservationsSerializer, ItemReservationsListSerializer, ItemPickupSerializer, ItemReturnSerializer, ItemReturnListSerializer
+from .serializers import ItemAddSerializer, ItemSerializer, ItemDetailSerializer, ItemReservationsSerializer, ItemReservationsListSerializer, ItemPickupSerializer, ItemReturnSerializer, ItemReturnListSerializer, UserSerializer
 
 class ItemService:
     
+    @staticmethod
+    def add_user(data):
+        serializer = UserSerializer(data=data)
+
+        if serializer.is_valid(raise_exception=True):
+            item = serializer.save()
+            return UserSerializer(item).data
+        
+        return {"errors": serializer.errors}
+
     @staticmethod
     def put_item(data):
         serializer = ItemAddSerializer(data=data)
