@@ -1,3 +1,4 @@
+import json
 import requests
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -5,20 +6,17 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .services import ItemService
-
-# /api/v1/shared/users
-class UserAddView(APIView):
-    permission_classes = [AllowAny]
-
-    @extend_schema(
-        summary="신규 인원 추가 테스트"
-        , description="신규 인원 추가 테스트"
-        , responses={200: "Success", 400: "400 Error"}
-    )
-    def post(self, request: Request) -> Response:
-        item_data = ItemService.put_item(request.data)
-        return Response(item_data, status=200 if "errors" not in item_data else 400)
+# from .services import ItemService
+from .serializers import (
+    ItemAddSerializer,
+    ItemListSerializer,
+    ItemDetailSerializer,
+    ItemReservationsSerializer,
+    ItemReservationsListSerializer,
+    ItemPickupSerializer,
+    ItemReturnSerializer,
+    ItemReturnListSerializer,
+)
 
 # /api/v1/shared/items
 class ItemAddView(APIView):
@@ -27,45 +25,36 @@ class ItemAddView(APIView):
     @extend_schema(
         summary="물품 등록"
         , description="신규 물품을 등록합니다."
+        , request=ItemAddSerializer
         , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
-        if not request.data:
-            return Response({"error": "request.data가 필요합니다."}, status=400)
-        
-        if not request.data['user']:
-            return Response({"error": "user 필요합니다."}, status=400)
-        
-        if not request.data['group_id']:
-            return Response({"error": "group_id가 필요합니다."}, status=400)
-        
-        if not request.data['item_name']:
-            return Response({"error": "item_name가 필요합니다."}, status=400)
-        
-        if not request.data['item_description']:
-            return Response({"error": "item_description가 필요합니다."}, status=400)
-        
-        if not request.data['item_image']:
-            return Response({"error": "item_image가 필요합니다."}, status=400)
-        
-        if not request.data['status']:
-            if request.data['status'] != 0:
-                return Response({"error": "status가 필요합니다."}, status=400)
-        
-        if not request.data['quantity']:
-            return Response({"error": "quantity가 필요합니다."}, status=400)
-        
-        if not request.data['caution']:
-            return Response({"error": "caution가 필요합니다."}, status=400)
-        
-        if not request.data['created_at']:
-            return Response({"error": "created_at가 필요합니다."}, status=400)
-        
-        if not request.data['deleted_at']:
-            return Response({"error": "deleted_at가 필요합니다."}, status=400)
+        serializer = ItemAddSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "Result": 0,
+                    "Message": serializer.errors,
+                    "data": ""
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        item_data = ItemService.put_item(request.data)
-        return Response(item_data, status=200 if "errors" not in item_data else 400)
+        # DB 저장
+        item = serializer.save()
+        # 저장 후, 간단한 정보만 내려줄 수도 있고, 전체 정보를 내려줄 수도 있음
+        created_data = {
+            "item_id": item.item_id,
+            "item_name": item.item_name
+        }
+        return Response(
+            {
+                "Result": 1,
+                "Message": "",
+                "data": json.dumps(created_data, default=str)
+            },
+            status=status.HTTP_201_CREATED
+        )
 
 
 
@@ -76,16 +65,32 @@ class ItemView(APIView):
     @extend_schema(
         summary="물품 리스트 조회"
         , description="전체 물품 리스트를 조회합니다."
+        , request=ItemListSerializer
         , responses={200: "Success", 400: "400 Error"}
     )
-    def post(self, request: Request) -> Response:
-        if not request.data:
-            return Response({"error": "request.data가 필요합니다."}, status=400)
-        
-        if not request.data['user_id']:
-            return Response({"error": "user_id가 필요합니다."}, status=400)
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response(
+                {
+                    "Result": 0,
+                    "Message": "user_id는 필수입니다.",
+                    "data": ""
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response(ItemService.get_item_list(request.data), status=200)
+        items = Item.objects.filter(user_id=user_id).order_by("-created_at")
+        serializer = ItemListSerializer(items, many=True)
+        # serializer.data는 이미 list[dict] 형태
+        return Response(
+            {
+                "Result": 1,
+                "Message": "",
+                "data": json.dumps(serializer.data, default=str)
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 
@@ -97,20 +102,53 @@ class ItemDetailView(APIView):
     @extend_schema(
         summary="물품 상세 조회"
         , description="특정 물품에 대한 상세 정보를 조회합니다."
+        , request=ItemDetailSerializer
         , responses={200: "Success", 400: "400 Error"}
     )
-    def post(self, request: Request) -> Response:
-        if not request.data:
-            return Response({"error": "request.data가 필요합니다."}, status=400)
-        
-        if not request.data['user_id']:
-            return Response({"error": "user_id가 필요합니다."}, status=400)
-        
-        if not request.data['item_id']:
-            return Response({"error": "item_id가 필요합니다."}, status=400)
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        item_id = request.data.get("item_id")
 
+        if not user_id:
+            return Response(
+                {
+                    "Result": 0,
+                    "Message": "user_id는 필수입니다.",
+                    "data": ""
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if not item_id:
+            return Response(
+                {
+                    "Result": 0,
+                    "Message": "item_id는 필수입니다.",
+                    "data": ""
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response(ItemService.get_item_detail(request.data), status=200)
+        try:
+            item = Item.objects.get(user_id=user_id, item_id=item_id)
+        except Item.DoesNotExist:
+            return Response(
+                {
+                    "Result": 0,
+                    "Message": "해당 아이템이 존재하지 않거나 user_id가 일치하지 않습니다.",
+                    "data": ""
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ItemDetailSerializer(item)
+        return Response(
+            {
+                "Result": 1,
+                "Message": "",
+                "data": json.dumps(serializer.data, default=str)
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 
@@ -123,6 +161,7 @@ class ItemReservationsView(APIView):
     @extend_schema(
         summary="물품 예약"
         , description="물품을 예약 합니다."
+        , request=ItemReservationsSerializer
         , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
@@ -153,6 +192,7 @@ class ItemReservationsListView(APIView):
     @extend_schema(
         summary="사용자 물품 조회"
         , description="사용자가 예약한 물품을 조회합니다."
+        , request=ItemReservationsListSerializer
         , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
@@ -171,6 +211,7 @@ class ItemPickupView(APIView):
     @extend_schema(
         summary="물품 픽업"
         , description="사용자가 예약한 물품을 픽업합니다."
+        , request=ItemPickupSerializer
         , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
@@ -201,6 +242,7 @@ class ItemReturnView(APIView):
     @extend_schema(
         summary="물품 반납"
         , description="사용자가 대여한 물품을 반납합니다."
+        , request=ItemReturnSerializer
         , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:
@@ -222,6 +264,7 @@ class ItemReturnListView(APIView):
     @extend_schema(
         summary="물품 반납 조회"
         , description="사용자가 반납한 물품을 조회합니다."
+        , request=ItemReturnListSerializer
         , responses={200: "Success", 400: "400 Error"}
     )
     def post(self, request: Request) -> Response:

@@ -1,93 +1,83 @@
-from .models import Item, Reservation, RentalRecord, RentalRequest
-from .serializers import ItemAddSerializer, ItemSerializer, ItemDetailSerializer, ItemReservationsSerializer, ItemReservationsListSerializer, ItemPickupSerializer, ItemReturnSerializer, ItemReturnListSerializer, UserSerializer
+# from .models import Item, Reservation, RentalRecord, RentalRequest
+# from .serializers import ItemAddSerializer, ItemListSerializer, ItemDetailSerializer, ItemReservationsSerializer, ItemReservationsListSerializer, ItemPickupSerializer, ItemReturnSerializer, ItemReturnListSerializer
 
-class ItemService:
+# class ItemService:
     
-    @staticmethod
-    def add_user(data):
-        serializer = UserSerializer(data=data)
+#     @staticmethod
+#     def put_item(data):
+#         serializer = ItemAddSerializer(data=data)
 
-        if serializer.is_valid(raise_exception=True):
-            item = serializer.save()
-            return UserSerializer(item).data
+#         if serializer.is_valid(raise_exception=True):
+#             item = serializer.save()
+#             return ItemAddSerializer(item).data
         
-        return {"errors": serializer.errors}
+#         return {"errors": serializer.errors}
 
-    @staticmethod
-    def put_item(data):
-        serializer = ItemAddSerializer(data=data)
+#     @staticmethod
+#     def get_item_list(data):
+#         item_list = Item.objects.filter(user_id=data['user_id'])
 
-        if serializer.is_valid(raise_exception=True):
-            item = serializer.save()
-            return ItemAddSerializer(item).data
+#         if not item_list.exists():
+#             return None
         
-        return {"errors": serializer.errors}
-
-    @staticmethod
-    def get_item_list(data):
-        item_list = Item.objects.filter(user_id=data['user_id'])
-
-        if not item_list.exists():
-            return None
-        
-        return ItemSerializer(item_list, many=True).data
+#         return ItemSerializer(item_list, many=True).data
     
 
-    @staticmethod
-    def get_item_detail(data):
-        item = Item.objects.filter(user_id=data['user_id'])
+#     @staticmethod
+#     def get_item_detail(data):
+#         item = Item.objects.filter(user_id=data['user_id'])
 
-        if not item.exists():
-            return None
+#         if not item.exists():
+#             return None
         
-        return ItemSerializer(item, many=True).data
+#         return ItemSerializer(item, many=True).data
     
 
-    @staticmethod
-    def item_reservations(data):
-        item = Item.objects.filter(user_id=data['user_id'])
+#     @staticmethod
+#     def item_reservations(data):
+#         item = Item.objects.filter(user_id=data['user_id'])
 
-        if not item.exists():
-            return None
+#         if not item.exists():
+#             return None
         
-        return ItemSerializer(item, many=True).data
+#         return ItemSerializer(item, many=True).data
     
     
-    @staticmethod
-    def get_item_reservations_list(data):
-        item = Item.objects.filter(user_id=data['user_id'])
+#     @staticmethod
+#     def get_item_reservations_list(data):
+#         item = Item.objects.filter(user_id=data['user_id'])
 
-        if not item.exists():
-            return None
+#         if not item.exists():
+#             return None
         
-        return ItemSerializer(item, many=True).data
+#         return ItemSerializer(item, many=True).data
     
 
-    @staticmethod
-    def item_pickup(data):
-        item = Item.objects.filter(user_id=data['user_id'])
+#     @staticmethod
+#     def item_pickup(data):
+#         item = Item.objects.filter(user_id=data['user_id'])
 
-        if not item.exists():
-            return None
+#         if not item.exists():
+#             return None
         
-        return ItemSerializer(item, many=True).data
+#         return ItemSerializer(item, many=True).data
     
 
-    @staticmethod
-    def item_return(data):
-        item = Item.objects.filter(user_id=data['user_id'])
+#     @staticmethod
+#     def item_return(data):
+#         item = Item.objects.filter(user_id=data['user_id'])
 
-        if not item.exists():
-            return None
+#         if not item.exists():
+#             return None
         
-        return ItemSerializer(item, many=True).data
+#         return ItemSerializer(item, many=True).data
     
 
-    @staticmethod
-    def get_item_return_list(data):
-        item = Item.objects.filter(user_id=data['user_id'])
+#     @staticmethod
+#     def get_item_return_list(data):
+#         item = Item.objects.filter(user_id=data['user_id'])
 
-        if not item.exists():
-            return None
+#         if not item.exists():
+#             return None
         
-        return ItemSerializer(item, many=True).data
+#         return ItemSerializer(item, many=True).data

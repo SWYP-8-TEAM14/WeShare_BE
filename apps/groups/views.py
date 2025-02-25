@@ -2,13 +2,13 @@ from django.db.models import Count
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 
 from .models import Group, GroupMember
 from .serializers import GroupSerializer, GroupCreateSerializer, GroupMemberSerializer
 from ..shared.models import Item
-from ..shared.serializers import ItemSerializer
+from ..shared.serializers import ItemListSerializer
 
 
 class GroupListView(generics.ListAPIView):
@@ -165,7 +165,7 @@ class GroupSharedItemListView(APIView):
 class GroupCreateView(generics.CreateAPIView):
     """ 새로운 그룹 생성 """
     serializer_class = GroupCreateSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
         group = serializer.save(group_admin=self.request.user)
