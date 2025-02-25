@@ -1,13 +1,24 @@
-from django.urls import path, include
-from .views import ItemAddView, ItemView, ItemDetailView, ItemReservationsView, ItemReservationsListView, ItemPickupView, ItemReturnView, ItemReturnListView
+from django.urls import path
+from .views import (
+    ItemView, 
+    ItemAddView, 
+    ItemDeleteView,
+    ItemDetailView,
+    ItemReserveView,
+    ItemReserveListView,
+    ItemPickupView,
+    ItemReturnableListView,
+    ItemReturnView,
+)
 
 urlpatterns = [
-    path("items/add", ItemAddView.as_view()),
     path("items/", ItemView.as_view()),
+    path("items/add", ItemAddView.as_view()),
+    path("items/delete", ItemDeleteView.as_view()),
     path("items/detail/", ItemDetailView.as_view()),
-    path("items/reservations/", ItemReservationsView.as_view()),
-    path("items/reservations/list/", ItemReservationsListView.as_view()),
-    path("items/pickup/", ItemPickupView.as_view()),
-    path("items/return/", ItemReturnView.as_view()),
-    path("items/return/list/", ItemReturnListView.as_view()),
+    path("items/reserve", ItemReserveView.as_view()),
+    path("items/reserve/list", ItemReserveListView.as_view()),
+    path("items/pickup", ItemPickupView.as_view()),
+    path("items/return/list", ItemReturnableListView.as_view()),
+    path("items/return", ItemReturnView.as_view()),
 ]

@@ -1,286 +1,362 @@
 import json
-import requests
-from drf_spectacular.utils import extend_schema
-from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.request import Request
-from rest_framework.response import Response
+from django.db import connection
 from rest_framework.views import APIView
-# from .services import ItemService
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+
+from .repository import ItemRepository
 from .serializers import (
-    ItemAddSerializer,
-    ItemListSerializer,
-    ItemDetailSerializer,
-    ItemReservationsSerializer,
-    ItemReservationsListSerializer,
-    ItemPickupSerializer,
-    ItemReturnSerializer,
-    ItemReturnListSerializer,
+    ItemAddSwaggerSerializer,
+    ItemListSwaggerSerializer,
+    ItemDetailSwaggerSerializer,
+    CommonResponseSerializer,
+    ItemListRequestSerializer,
+    ItemDetailRequestSerializer
 )
 
-# /api/v1/shared/items
 class ItemAddView(APIView):
+    """
+    POST /api/v1/shared/items/add
+    """
     permission_classes = [AllowAny]
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
+
     @extend_schema(
-        summary="물품 등록"
-        , description="신규 물품을 등록합니다."
-        , request=ItemAddSerializer
-        , responses={200: "Success", 400: "400 Error"}
-    )
-    def post(self, request: Request) -> Response:
-        serializer = ItemAddSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {
-                    "Result": 0,
-                    "Message": serializer.errors,
-                    "data": ""
-                },
-                status=status.HTTP_400_BAD_REQUEST
+        summary="물품 등록",
+        description="신규 물품을 등록합니다.",
+        request=ItemAddSwaggerSerializer,
+        responses={
+            201: OpenApiResponse(
+                response=CommonResponseSerializer,
+                description="등록 성공 (Result=1)"
+            ),
+            400: OpenApiResponse(
+                response=CommonResponseSerializer,
+                description="등록 실패 (Result=0)"
             )
+        },
+    )
+    def post(self, request):
+        data = request.data
+        if not data.get("user_id") and data.get("user_id") != 0:
+            return Response({
+                "Result": 0,
+                "Message": "user_id가 필요합니다.",
+                "data": ""
+            }, status=400)
+        if not data.get("group_id") and data.get("group_id") != 0:
+            return Response({
+                "Result": 0,
+                "Message": "group_id가 필요합니다.",
+                "data": ""
+            }, status=400)
+        if not data.get("item_name"):
+            return Response({
+                "Result": 0,
+                "Message": "item_name이 필요합니다.",
+                "data": ""
+            }, status=400)
 
-        # DB 저장
-        item = serializer.save()
-        # 저장 후, 간단한 정보만 내려줄 수도 있고, 전체 정보를 내려줄 수도 있음
-        created_data = {
-            "item_id": item.item_id,
-            "item_name": item.item_name
+        try:
+            new_id = self.repository.create_item(data)
+        except Exception as e:
+            return Response({
+                "Result": 0,
+                "Message": str(e),
+                "data": ""
+            }, status=400)
+
+        response_data = {
+            "item_id": new_id,
+            "item_name": data["item_name"]
         }
-        return Response(
-            {
-                "Result": 1,
-                "Message": "",
-                "data": json.dumps(created_data, default=str)
-            },
-            status=status.HTTP_201_CREATED
-        )
+        return Response({
+            "Result": 1,
+            "Message": "",
+            "data": json.dumps(response_data, default=str)
+        }, status=201)
 
-
-
-# /api/v1/shared/items
-class ItemView(APIView):
+class ItemDeleteView(APIView):
+    """
+    [POST] /api/v1/shared/items/delete
+    """
     permission_classes = [AllowAny]
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
+
     @extend_schema(
-        summary="물품 리스트 조회"
-        , description="전체 물품 리스트를 조회합니다."
-        , request=ItemListSerializer
-        , responses={200: "Success", 400: "400 Error"}
+        summary="물품 삭제",
+        description="등록된 물품을 삭제 (hard delete) 합니다.",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="삭제 성공/실패 여부 반환"),
+            400: OpenApiResponse(description="에러")
+        }
+    )
+    def post(self, request):
+        item_id = request.data.get("item_id")
+        if not item_id and item_id != 0:
+            return Response({"Result":0,"Message":"item_id가 필요합니다.","data":""}, status=400)
+
+        deleted_count = self.repository.delete_item(int(item_id))
+        if deleted_count > 0:
+            return Response({"Result":1,"Message":"","data":""}, status=200)
+        else:
+            return Response({"Result":0,"Message":"해당 item_id가 존재하지 않습니다.","data":""}, status=404)
+
+
+class ItemView(APIView):
+    """
+    POST /api/v1/shared/items/
+    """
+    permission_classes = [AllowAny]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
+
+    @extend_schema(
+        summary="물품 리스트 조회",
+        description="특정 user_id가 등록한 물품 목록을 조회합니다.",
+        request=ItemListRequestSerializer,
+        responses={
+            200: OpenApiResponse(
+                response=CommonResponseSerializer,
+                description="조회 성공 (Result=1)"
+            ),
+            400: OpenApiResponse(
+                response=CommonResponseSerializer,
+                description="조회 실패 (Result=0)"
+            )
+        },
     )
     def post(self, request):
         user_id = request.data.get("user_id")
-        if not user_id:
-            return Response(
-                {
-                    "Result": 0,
-                    "Message": "user_id는 필수입니다.",
-                    "data": ""
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if not user_id and user_id != 0:
+            return Response({
+                "Result": 0,
+                "Message": "user_id가 필요합니다.",
+                "data": ""
+            }, status=400)
 
-        items = Item.objects.filter(user_id=user_id).order_by("-created_at")
-        serializer = ItemListSerializer(items, many=True)
-        # serializer.data는 이미 list[dict] 형태
-        return Response(
-            {
-                "Result": 1,
-                "Message": "",
-                "data": json.dumps(serializer.data, default=str)
-            },
-            status=status.HTTP_200_OK
-        )
+        try:
+            result_list = self.repository.get_item_list(int(user_id))
+        except Exception as e:
+            return Response({"Result": 0, "Message": str(e), "data": ""}, status=400)
+
+        return Response({
+            "Result": 1,
+            "Message": "",
+            "data": json.dumps(result_list, default=str)
+        }, status=200)
 
 
-
-
-# /api/v1/shared/items/detail
 class ItemDetailView(APIView):
+    """
+    POST /api/v1/shared/items/detail/
+    """
     permission_classes = [AllowAny]
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
+
     @extend_schema(
-        summary="물품 상세 조회"
-        , description="특정 물품에 대한 상세 정보를 조회합니다."
-        , request=ItemDetailSerializer
-        , responses={200: "Success", 400: "400 Error"}
+        summary="물품 상세 조회",
+        description="특정 user_id와 item_id로 1건 상세 정보를 조회합니다.",
+        request=ItemDetailRequestSerializer,
+        responses={
+            200: OpenApiResponse(
+                response=CommonResponseSerializer,
+                description="조회 성공 (Result=1)"
+            ),
+            400: OpenApiResponse(
+                response=CommonResponseSerializer,
+                description="조회 실패 (Result=0)"
+            ),
+            404: OpenApiResponse(
+                response=CommonResponseSerializer,
+                description="데이터 없음"
+            )
+        },
     )
     def post(self, request):
         user_id = request.data.get("user_id")
         item_id = request.data.get("item_id")
 
-        if not user_id:
-            return Response(
-                {
-                    "Result": 0,
-                    "Message": "user_id는 필수입니다.",
-                    "data": ""
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        if not item_id:
-            return Response(
-                {
-                    "Result": 0,
-                    "Message": "item_id는 필수입니다.",
-                    "data": ""
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if not user_id and user_id != 0:
+            return Response({"Result": 0, "Message": "user_id가 필요합니다.", "data": ""}, status=400)
+        if not item_id and item_id != 0:
+            return Response({"Result": 0, "Message": "item_id가 필요합니다.", "data": ""}, status=400)
 
         try:
-            item = Item.objects.get(user_id=user_id, item_id=item_id)
-        except Item.DoesNotExist:
-            return Response(
-                {
-                    "Result": 0,
-                    "Message": "해당 아이템이 존재하지 않거나 user_id가 일치하지 않습니다.",
-                    "data": ""
-                },
-                status=status.HTTP_404_NOT_FOUND
-            )
+            detail_data = self.repository.get_item_detail(int(user_id), int(item_id))
+        except Exception as e:
+            return Response({"Result": 0, "Message": str(e), "data": ""}, status=400)
 
-        serializer = ItemDetailSerializer(item)
-        return Response(
-            {
-                "Result": 1,
-                "Message": "",
-                "data": json.dumps(serializer.data, default=str)
-            },
-            status=status.HTTP_200_OK
-        )
+        if not detail_data:
+            return Response({"Result": 0, "Message": "해당 데이터가 존재하지 않습니다.", "data": ""}, status=404)
+
+        return Response({
+            "Result": 1,
+            "Message": "",
+            "data": json.dumps(detail_data, default=str)
+        }, status=200)
 
 
-
-
-
-# /api/v1/shared/items/reservations
-class ItemReservationsView(APIView):
+class ItemReserveView(APIView):
+    """
+    [POST] /api/v1/shared/items/reserve
+    """
     permission_classes = [AllowAny]
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
 
     @extend_schema(
-        summary="물품 예약"
-        , description="물품을 예약 합니다."
-        , request=ItemReservationsSerializer
-        , responses={200: "Success", 400: "400 Error"}
+        summary="물품 예약",
+        description="RESERVATIONS 테이블에 새 레코드를 삽입합니다.",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="예약 성공 (Result=1)"),
+            400: OpenApiResponse(description="에러 (Result=0)")
+        }
     )
-    def post(self, request: Request) -> Response:
-        if not request.data:
-            return Response({"error": "request.data가 필요합니다."}, status=400)
-        
-        if not request.data['user_id']:
-            return Response({"error": "user_id가 필요합니다."}, status=400)
-        
-        if not request.data['item_id']:
-            return Response({"error": "item_id가 필요합니다."}, status=400)
-        
-        if not request.data['start_time']:
-            return Response({"error": "start_time이 필요합니다."}, status=400)
-        
-        if not request.data['end_time']:
-            return Response({"error": "end_time이 필요합니다."}, status=400)
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        item_id = request.data.get("item_id")
+        start_time = request.data.get("start_time")
+        end_time   = request.data.get("end_time")
 
-        return Response(ItemService.item_reservations(request.data), status=200)
+        if not user_id and user_id != 0:
+            return Response({"Result":0,"Message":"필수필드(user_id, item_id, start_time, end_time) 누락","data":""}, status=400)
+        if not item_id and item_id != 0:
+            return Response({"Result":0,"Message":"필수필드(user_id, item_id, start_time, end_time) 누락","data":""}, status=400)
+        if not start_time or not end_time:
+            return Response({"Result":0,"Message":"필수필드(user_id, item_id, start_time, end_time) 누락","data":""}, status=400)
 
+        try:
+            self.repository.reserve_item(int(user_id), int(item_id), start_time, end_time)
+        except Exception as e:
+            return Response({"Result":0,"Message":str(e),"data":""}, status=400)
 
-
-
-# /api/v1/shared/items/reservations/list
-class ItemReservationsListView(APIView):
+        return Response({"Result":1,"Message":"","data":""}, status=200)
+    
+class ItemReserveListView(APIView):
+    """
+    [POST] /api/v1/shared/items/reserve/list
+    """
     permission_classes = [AllowAny]
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
 
     @extend_schema(
-        summary="사용자 물품 조회"
-        , description="사용자가 예약한 물품을 조회합니다."
-        , request=ItemReservationsListSerializer
-        , responses={200: "Success", 400: "400 Error"}
+        summary="예약 물품 조회",
+        description="특정 user_id가 예약한 물품 목록을 조회합니다.",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="조회 성공 (Result=1)"),
+            400: OpenApiResponse(description="오류 (Result=0)")
+        }
     )
-    def post(self, request: Request) -> Response:
-        # if not request.data['user_id']:
-        #     return Response({"error": "user_id가 필요합니다."}, status=400)
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        if not user_id and user_id != 0:
+            return Response({"Result":0,"Message":"user_id가 필요합니다.","data":""}, status=400)
 
-        return Response(ItemService.get_item_reservations_list(request.data), status=200)
-    
-    
-    
-    
-# /api/v1/shared/items/pickup
+        try:
+            rows = self.repository.get_reserved_items(int(user_id))
+        except Exception as e:
+            return Response({"Result":0,"Message":str(e),"data":""}, status=400)
+
+        return Response({"Result":1,"Message":"","data":str(rows)}, status=200)
+
 class ItemPickupView(APIView):
+    """
+    [POST] /api/v1/shared/items/pickup
+    """
     permission_classes = [AllowAny]
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
 
     @extend_schema(
-        summary="물품 픽업"
-        , description="사용자가 예약한 물품을 픽업합니다."
-        , request=ItemPickupSerializer
-        , responses={200: "Success", 400: "400 Error"}
+        summary="픽업 인증",
+        description="사용자가 예약한 물품을 실제로 픽업합니다.",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="픽업 성공"),
+            400: OpenApiResponse(description="에러"),
+            404: OpenApiResponse(description="예약 내역 없음")
+        }
     )
-    def post(self, request: Request) -> Response:
-        if not request.data:
-            return Response({"error": "request.data가 필요합니다."}, status=400)
-        
-        if not request.data['user_id']:
-            return Response({"error": "user_id가 필요합니다."}, status=400)
-        
-        if not request.data['item_id']:
-            return Response({"error": "item_id가 필요합니다."}, status=400)
-        
-        if not request.data['pickup_time']:
-            return Response({"error": "pickup_time이 필요합니다."}, status=400)
-        
-        if not request.data['image']:
-            return Response({"error": "image가 필요합니다."}, status=400)
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        item_id = request.data.get("item_id")
+        pickup_time = request.data.get("pickup_time")
+        image = request.data.get("image","")
 
-        return Response(ItemService.item_pickup(request.data), status=200)
+        if not user_id and user_id != 0:
+            return Response({"Result":0,"Message":"(user_id, item_id, pickup_time)는 필수입니다.","data":""}, status=400)
+        if not item_id and item_id != 0:
+            return Response({"Result":0,"Message":"(user_id, item_id, pickup_time)는 필수입니다.","data":""}, status=400)
+        if not pickup_time:
+            return Response({"Result":0,"Message":"(user_id, item_id, pickup_time)는 필수입니다.","data":""}, status=400)
 
+        try:
+            result = self.repository.pickup_item(int(user_id), int(item_id), pickup_time, image)
+        except Exception as e:
+            return Response({"Result":0,"Message":str(e),"data":""}, status=400)
 
+        if not result:
+            return Response({"Result":0,"Message":"해당 예약을 찾을 수 없습니다.","data":""}, status=404)
 
+        return Response({
+            "Result":1,
+            "Message":"",
+            "data":str(result)
+        }, status=200)
 
-# /api/v1/shared/items/return/list
-class ItemReturnView(APIView):
+class ItemReturnableListView(APIView):
+    """
+    [POST] /api/v1/shared/items/return/list
+    """
     permission_classes = [AllowAny]
 
-    @extend_schema(
-        summary="물품 반납"
-        , description="사용자가 대여한 물품을 반납합니다."
-        , request=ItemReturnSerializer
-        , responses={200: "Success", 400: "400 Error"}
-    )
-    def post(self, request: Request) -> Response:
-        if not request.data:
-            return Response({"error": "request.data가 필요합니다."}, status=400)
-        
-        if not request.data['user_id']:
-            return Response({"error": "user_id가 필요합니다."}, status=400)
-
-        return Response(ItemService.item_return(request.data), status=200)
-
-
-
-
-    # /api/v1/shared/items/return
-class ItemReturnListView(APIView):
-    permission_classes = [AllowAny]
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
 
     @extend_schema(
-        summary="물품 반납 조회"
-        , description="사용자가 반납한 물품을 조회합니다."
-        , request=ItemReturnListSerializer
-        , responses={200: "Success", 400: "400 Error"}
+        summary="반납 가능 물품 조회",
+        description="현재 대여중(rental_status='ON_RENT')인 물품 목록 조회",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="조회 성공 (Result=1)"),
+            400: OpenApiResponse(description="오류 (Result=0)")
+        }
     )
-    def post(self, request: Request) -> Response:
-        if not request.data:
-            return Response({"error": "request.data가 필요합니다."}, status=400)
-        
-        if not request.data['user_id']:
-            return Response({"error": "user_id가 필요합니다."}, status=400)
-        
-        if not request.data['item_id']:
-            return Response({"error": "item_id가 필요합니다."}, status=400)
-        
-        if not request.data['return_time']:
-            return Response({"error": "return_time이 필요합니다."}, status=400)
-        
-        if not request.data['return_image']:
-            return Response({"error": "return_image이 필요합니다."}, status=400)
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        if not user_id and user_id != 0:
+            return Response({"Result":0,"Message":"user_id가 필요합니다.","data":""}, status=400)
 
-        return Response(ItemService.get_item_return_list(request.data), status=200)
+        try:
+            rows = self.repository.get_returnable_items(int(user_id))
+        except Exception as e:
+            return Response({"Result":0,"Message":str(e),"data":""}, status=400)
+
+        return Response({
+            "Result":1,
+            "Message":"",
+            "data":str(rows)
+        }, status=200)

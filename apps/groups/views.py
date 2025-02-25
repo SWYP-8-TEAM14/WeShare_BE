@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 
 from .models import Group, GroupMember
 from .serializers import GroupSerializer, GroupCreateSerializer, GroupMemberSerializer
-from ..shared.models import Item
-from ..shared.serializers import ItemListSerializer
+# from ..shared.models import Item
+# from ..shared.serializers import ItemListSerializer
 
 
 class GroupListView(generics.ListAPIView):

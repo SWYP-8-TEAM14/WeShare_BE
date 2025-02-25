@@ -12,7 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.groups.models import GroupMember
-from apps.shared.models import Item
+# from apps.shared.models import Item
 from apps.users import serializers
 from apps.users.models import User
 from apps.users.serializers import (
