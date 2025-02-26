@@ -1,14 +1,14 @@
 from django.urls import path
 from .views import (
-    ItemView, 
-    ItemAddView, 
+    ItemView,
+    ItemAddView,
     ItemDeleteView,
     ItemDetailView,
     ItemReserveView,
     ItemReserveListView,
     ItemPickupView,
     ItemReturnableListView,
-    ItemReturnView,
+    # ItemReturnView,
 )
 
 urlpatterns = [
@@ -20,5 +20,5 @@ urlpatterns = [
     path("items/reserve/list", ItemReserveListView.as_view()),
     path("items/pickup", ItemPickupView.as_view()),
     path("items/return/list", ItemReturnableListView.as_view()),
-    path("items/return", ItemReturnView.as_view()),
+    # path("items/return", ItemReturnView.as_view()),
 ]
