@@ -5,6 +5,7 @@ class ItemListRequestSerializer(serializers.Serializer):
     물품 리스트 조회 시, Body로 전달하는 파라미터.
     """
     user_id = serializers.IntegerField(help_text="유저 ID")
+    # group_id = serializers.IntegerField(help_text="그룹 ID (전체 = 0)")
 
 class ItemDetailRequestSerializer(serializers.Serializer):
     """
@@ -12,6 +13,31 @@ class ItemDetailRequestSerializer(serializers.Serializer):
     """
     user_id = serializers.IntegerField(help_text="유저 ID")
     item_id = serializers.IntegerField(help_text="아이템 ID")
+    
+
+class ItemDeleteRequestSerializer(serializers.Serializer):
+    """
+    물품 삭제 시, Body로 전달하는 파라미터.
+    """
+    user_id = serializers.IntegerField(help_text="유저 ID")
+    item_id = serializers.IntegerField(help_text="아이템 ID")
+
+class ItemUserListRequestSerializer(serializers.Serializer):
+    """
+    사용자 예약 물품 조회 시, Body로 전달하는 파라미터.
+    """
+    user_id = serializers.IntegerField(help_text="유저 ID")
+    group_id = serializers.IntegerField(help_text="그룹 ID (전체 = 0)")
+    order_option = serializers.IntegerField(help_text="정렬 (최근 = 1,  = 2)")
+
+class ItemReserveRequestSerializer(serializers.Serializer):
+    """
+    사용자 예약 물품 조회 시, Body로 전달하는 파라미터.
+    """
+    user_id = serializers.IntegerField(help_text="유저 ID")
+    item_id = serializers.IntegerField(help_text="아이템 ID")
+    start_time = serializers.DateTimeField(required=True, allow_null=False)
+    end_time = serializers.DateTimeField(required=True, allow_null=False)
 
 
 class ItemAddSwaggerSerializer(serializers.Serializer):
@@ -19,6 +45,8 @@ class ItemAddSwaggerSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
     group_id = serializers.IntegerField()
     item_name = serializers.CharField(max_length=255)
+    pickup_place = serializers.CharField(required=False, allow_blank=True)
+    return_place = serializers.CharField(required=False, allow_blank=True)
     item_description = serializers.CharField(required=False, allow_blank=True)
     item_image = serializers.CharField(required=False, allow_blank=True)
     status = serializers.IntegerField(required=False)

@@ -14,7 +14,10 @@ from .serializers import (
     ItemDetailSwaggerSerializer,
     CommonResponseSerializer,
     ItemListRequestSerializer,
-    ItemDetailRequestSerializer
+    ItemDetailRequestSerializer,
+    ItemDeleteRequestSerializer,
+    ItemUserListRequestSerializer,
+    ItemReserveRequestSerializer
 )
 
 class ItemAddView(APIView):
@@ -95,7 +98,7 @@ class ItemDeleteView(APIView):
     @extend_schema(
         summary="물품 삭제",
         description="등록된 물품을 삭제 (hard delete) 합니다.",
-        request=None,
+        request=ItemDeleteRequestSerializer,
         responses={
             200: OpenApiResponse(description="삭제 성공/실패 여부 반환"),
             400: OpenApiResponse(description="에러")
@@ -198,7 +201,7 @@ class ItemDetailView(APIView):
             return Response({"Result": 0, "Message": "item_id가 필요합니다.", "data": ""}, status=400)
 
         try:
-            detail_data = self.repository.get_item_detail(int(user_id), int(item_id))
+            detail_data = self.repository.get_item_detail(int(item_id))
         except Exception as e:
             return Response({"Result": 0, "Message": str(e), "data": ""}, status=400)
 
@@ -224,7 +227,7 @@ class ItemReserveView(APIView):
     @extend_schema(
         summary="물품 예약",
         description="RESERVATIONS 테이블에 새 레코드를 삽입합니다.",
-        request=None,
+        request=ItemReserveRequestSerializer,
         responses={
             200: OpenApiResponse(description="예약 성공 (Result=1)"),
             400: OpenApiResponse(description="에러 (Result=0)")
@@ -261,8 +264,8 @@ class ItemReserveListView(APIView):
 
     @extend_schema(
         summary="예약 물품 조회",
-        description="특정 user_id가 예약한 물품 목록을 조회합니다.",
-        request=None,
+        description="특정 user 가 예약한 물품 목록을 조회합니다.",
+        request=ItemUserListRequestSerializer,
         responses={
             200: OpenApiResponse(description="조회 성공 (Result=1)"),
             400: OpenApiResponse(description="오류 (Result=0)")
@@ -359,4 +362,51 @@ class ItemReturnableListView(APIView):
             "Result":1,
             "Message":"",
             "data":str(rows)
+        }, status=200)
+
+class ItemReturnView(APIView):
+    """
+    [POST] /api/v1/shared/items/return
+    """
+    permission_classes = [AllowAny]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
+
+    @extend_schema(
+        summary="반납 인증",
+        description="대여중인 물품을 반납 처리 (rental_records 업데이트)",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="반납 완료 (Result=1)"),
+            400: OpenApiResponse(description="오류 (Result=0)"),
+            404: OpenApiResponse(description="반납할 내역 없음")
+        }
+    )
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        item_id = request.data.get("item_id")
+        return_time = request.data.get("return_time")
+        return_image = request.data.get("return_image","")
+
+        if not user_id and user_id != 0:
+            return Response({"Result":0,"Message":"필수필드(user_id, item_id, return_time) 누락","data":""}, status=400)
+        if not item_id and item_id != 0:
+            return Response({"Result":0,"Message":"필수필드(user_id, item_id, return_time) 누락","data":""}, status=400)
+        if not return_time:
+            return Response({"Result":0,"Message":"필수필드(user_id, item_id, return_time) 누락","data":""}, status=400)
+
+        try:
+            result = self.repository.return_item(int(user_id), int(item_id), return_time, return_image)
+        except Exception as e:
+            return Response({"Result":0,"Message":str(e),"data":""}, status=400)
+
+        if not result:
+            return Response({"Result":0,"Message":"대여중인 내역이 없습니다.","data":""}, status=404)
+
+        return Response({
+            "Result":1,
+            "Message":"",
+            "data": str(result)
         }, status=200)

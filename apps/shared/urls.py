@@ -8,7 +8,7 @@ from .views import (
     ItemReserveListView,
     ItemPickupView,
     ItemReturnableListView,
-    ItemReturnView,
+    ItemReturnView
 )
 
 urlpatterns = [
