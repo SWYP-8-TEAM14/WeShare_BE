@@ -1,7 +1,4 @@
 from typing import Any
-
-import self
-from attr import attrs
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer

@@ -31,14 +31,22 @@ class HomeView(APIView):
         user = request.user
 
         # 가입된 그룹 ID 목록 가져오기
-        joined_groups = GroupMember.objects.filter(user=user).values_list("group_id", flat=True)
+        if user.is_authenticated:
+            joined_groups = GroupMember.objects.filter(user=user).values_list("group_id", flat=True)
+        else:
+            joined_groups = []
 
-        available_items = (
-            Item.objects.filter(group_id__in=joined_groups, status=1)
-            .order_by("-created_at")[:4]
-        )
-        available_items_data = [{"id": item.id, "name": item.item_name, "group": item.group.group_name} for item in available_items]
+        # 공용 물품 조회(로그인하지 않은 사용자는 빈 QuerySet 반환)
+        if joined_groups:
+            available_items = (
+                Item.objects.filter(group_id__in=joined_groups, status=1)
+                .order_b("-created_at")[:4]
+            )
+        else:
+            available_items = Item.objects.none()
 
+
+        # 응답 데이터 구성
         response_data = {
             "message": "WeShare 홈 접속 성공",
             "buttons": {
@@ -46,7 +54,10 @@ class HomeView(APIView):
                 "pickup": "/api/v1/shared/items/pickup/",
                 "return": "/api/v1/shared/items/return/",
             },
-            "available_items": available_items_data,
+            "available_items": [
+                {"id": item.id, "name": item.item_name, "group": item.group.group_name}
+                for item in available_items
+            ],
             "tabs": ["홈", "내 그룹", "공유물품", "마이페이지"],
         }
 

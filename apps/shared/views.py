@@ -360,3 +360,7 @@ class ItemReturnableListView(APIView):
             "Message":"",
             "data":str(rows)
         }, status=200)
+
+
+class ItemReturnView(APIView):
+    pass
