@@ -1,0 +1,9 @@
+[2025-02-23 22:49:46 +0900] [2683] [INFO] Starting gunicorn 23.0.0
+[2025-02-23 22:49:46 +0900] [2683] [INFO] Listening at: http://0.0.0.0:8000 (2683)
+[2025-02-23 22:49:46 +0900] [2683] [INFO] Using worker: sync
+[2025-02-23 22:49:46 +0900] [2691] [INFO] Booting worker with pid: 2691
+Failed to find attribute 'applica' in 'config.wsgi'.
+[2025-02-23 22:49:46 +0900] [2691] [INFO] Worker exiting (pid: 2691)
+[2025-02-23 22:49:46 +0900] [2683] [ERROR] Worker (pid:2691) exited with code 4
+[2025-02-23 22:49:46 +0900] [2683] [ERROR] Shutting down: Master
+[2025-02-23 22:49:46 +0900] [2683] [ERROR] Reason: App failed to load.

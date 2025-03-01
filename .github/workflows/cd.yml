@@ -1,0 +1,66 @@
+name: Auto Deploy Django to NCP
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    # GitHub Actions에서 최신 코드 체크아웃
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Python 3.12 환경 설정
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    # SSH를 통해 NCP 서버에 연결하고 Django 배포
+    - name: Deploy Django to NCP
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.NCP_HOST }}
+        username: ${{ secrets.NCP_USERNAME }}
+        password: ${{ secrets.NCP_PASSWORD }}
+        port: ${{ secrets.NCP_PORT }}
+        script: |
+          echo "프로젝트 디렉토리 이동"
+          cd /home/${{ secrets.NCP_USERNAME }}/my-django-app || mkdir -p /home/${{ secrets.NCP_USERNAME }}/my-django-app && cd /home/${{ secrets.NCP_USERNAME }}/my-django-app
+          
+          echo "기존 코드 삭제 및 최신 코드 가져오기"
+          rm -rf my-django-app
+          git clone https://github.com/your-repo.git my-django-app
+          cd my-django-app
+          git checkout develop
+          git pull origin develop
+
+          echo "Python 가상환경 설정"
+          python3.12 -m venv venv
+          source venv/bin/activate
+
+          echo "Django 의존성 설치"
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+          echo "Secret 환경 변수 설정"
+          echo "${{ secrets.SECRETS_ENV }}" | base64 --decode > .env
+
+          echo "Django 마이그레이션 & 정적 파일 수집"
+          python manage.py migrate --noinput
+          python manage.py collectstatic --noinput
+
+          echo "기존 Django 프로세스 종료"
+          pkill -f "manage.py runserver" || true
+
+          echo "Django 실행 (추후 Gunicorn 변경)"
+          nohup python manage.py runserver 0.0
+          
+          echo "Gunicorn 실행"
+          pkill -f "gunicorn" || true
+          nohup venv/bin/gunicorn --bind 0.0.0.0:8000 config.wsgi:application > gunicorn.log 2>&1 &
+
+          echo "배포 완료"
