@@ -143,15 +143,35 @@ class ItemView(APIView):
     )
     def post(self, request):
         user_id = request.data.get("user_id")
+        group_id = request.data.get("group_id")
+        sort = request.data.get("sort")
         if not user_id and user_id != 0:
             return Response({
                 "Result": 0,
                 "Message": "user_id가 필요합니다.",
                 "data": ""
             }, status=400)
+        
+        if not group_id and group_id != 0:
+            return Response({
+                "Result": 0,
+                "Message": "group_id가 필요합니다.",
+                "data": ""
+            }, status=400)
+        
+        if not sort and sort != 0:
+            return Response({
+                "Result": 0,
+                "Message": "sort (정렬) 값이 없습니다.",
+                "data": ""
+            }, status=400)
+        
+        sorted = "ASC"
+        if sort == 2:
+            sorted = "DESC"
 
         try:
-            result_list = self.repository.get_item_list(int(user_id))
+            result_list = self.repository.get_item_list(int(group_id), int(user_id), sorted)
         except Exception as e:
             return Response({"Result": 0, "Message": str(e), "data": ""}, status=400)
 
@@ -226,7 +246,7 @@ class ItemReserveView(APIView):
 
     @extend_schema(
         summary="물품 예약",
-        description="RESERVATIONS 테이블에 새 레코드를 삽입합니다.",
+        description="물품 예약을 진행합니다. 물품 상태: (기본=0, 예약중=1, 픽업중=2)",
         request=ItemReserveRequestSerializer,
         responses={
             200: OpenApiResponse(description="예약 성공 (Result=1)"),
@@ -236,18 +256,18 @@ class ItemReserveView(APIView):
     def post(self, request):
         user_id = request.data.get("user_id")
         item_id = request.data.get("item_id")
-        start_time = request.data.get("start_time")
-        end_time   = request.data.get("end_time")
+        rental_start = request.data.get("rental_start")
+        rental_end   = request.data.get("rental_end")
 
         if not user_id and user_id != 0:
-            return Response({"Result":0,"Message":"필수필드(user_id, item_id, start_time, end_time) 누락","data":""}, status=400)
+            return Response({"Result":0,"Message":"필수필드(user_id, item_id, rental_start, rental_end) 누락","data":""}, status=400)
         if not item_id and item_id != 0:
-            return Response({"Result":0,"Message":"필수필드(user_id, item_id, start_time, end_time) 누락","data":""}, status=400)
-        if not start_time or not end_time:
-            return Response({"Result":0,"Message":"필수필드(user_id, item_id, start_time, end_time) 누락","data":""}, status=400)
+            return Response({"Result":0,"Message":"필수필드(user_id, item_id, rental_start, rental_end) 누락","data":""}, status=400)
+        if not rental_start or not rental_end:
+            return Response({"Result":0,"Message":"필수필드(user_id, item_id, rental_start, rental_end) 누락","data":""}, status=400)
 
         try:
-            self.repository.reserve_item(int(user_id), int(item_id), start_time, end_time)
+            self.repository.reserve_item(int(user_id), int(item_id), rental_start, rental_end)
         except Exception as e:
             return Response({"Result":0,"Message":str(e),"data":""}, status=400)
 
@@ -273,11 +293,35 @@ class ItemReserveListView(APIView):
     )
     def post(self, request):
         user_id = request.data.get("user_id")
+        group_id = request.data.get("group_id")
+        sort = request.data.get("sort")
         if not user_id and user_id != 0:
-            return Response({"Result":0,"Message":"user_id가 필요합니다.","data":""}, status=400)
+            return Response({
+                "Result": 0,
+                "Message": "user_id가 필요합니다.",
+                "data": ""
+            }, status=400)
+        
+        if not group_id and group_id != 0:
+            return Response({
+                "Result": 0,
+                "Message": "group_id가 필요합니다.",
+                "data": ""
+            }, status=400)
+        
+        if not sort and sort != 0:
+            return Response({
+                "Result": 0,
+                "Message": "sort (정렬) 값이 없습니다.",
+                "data": ""
+            }, status=400)
+        
+        sorted = "ASC"
+        if sort == 2:
+            sorted = "DESC"
 
         try:
-            rows = self.repository.get_reserved_items(int(user_id))
+            rows = self.repository.get_reserved_items(int(group_id), int(user_id), sorted)
         except Exception as e:
             return Response({"Result":0,"Message":str(e),"data":""}, status=400)
 

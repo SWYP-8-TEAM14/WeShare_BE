@@ -5,7 +5,8 @@ class ItemListRequestSerializer(serializers.Serializer):
     물품 리스트 조회 시, Body로 전달하는 파라미터.
     """
     user_id = serializers.IntegerField(help_text="유저 ID")
-    # group_id = serializers.IntegerField(help_text="그룹 ID (전체 = 0)")
+    group_id = serializers.IntegerField(help_text="그룹 ID (전체=0)")
+    sort = serializers.IntegerField(help_text="정렬 (최근순=1, 오래된순=2)")
 
 class ItemDetailRequestSerializer(serializers.Serializer):
     """
@@ -24,11 +25,11 @@ class ItemDeleteRequestSerializer(serializers.Serializer):
 
 class ItemUserListRequestSerializer(serializers.Serializer):
     """
-    사용자 예약 물품 조회 시, Body로 전달하는 파라미터.
+    사용자 예약 물품 조회 시, Body로 전달하는 파라미터. 
     """
     user_id = serializers.IntegerField(help_text="유저 ID")
-    group_id = serializers.IntegerField(help_text="그룹 ID (전체 = 0)")
-    order_option = serializers.IntegerField(help_text="정렬 (최근 = 1,  = 2)")
+    group_id = serializers.IntegerField(help_text="그룹 ID (전체=0)")
+    sort = serializers.IntegerField(help_text="정렬 (최근순=1, 오래된순=2)")
 
 class ItemReserveRequestSerializer(serializers.Serializer):
     """
@@ -36,8 +37,8 @@ class ItemReserveRequestSerializer(serializers.Serializer):
     """
     user_id = serializers.IntegerField(help_text="유저 ID")
     item_id = serializers.IntegerField(help_text="아이템 ID")
-    start_time = serializers.DateTimeField(required=True, allow_null=False)
-    end_time = serializers.DateTimeField(required=True, allow_null=False)
+    rental_start = serializers.DateTimeField(help_text="대여 시간", required=True, allow_null=False)
+    rental_end = serializers.DateTimeField(help_text="반납 시간", required=True, allow_null=False)
 
 
 class ItemAddSwaggerSerializer(serializers.Serializer):
@@ -52,7 +53,6 @@ class ItemAddSwaggerSerializer(serializers.Serializer):
     status = serializers.IntegerField(required=False)
     quantity = serializers.IntegerField(required=False)
     caution = serializers.CharField(required=False, allow_blank=True)
-    created_at = serializers.DateTimeField(required=False, allow_null=True)
     deleted_at = serializers.DateTimeField(required=False, allow_null=True)
 
 
@@ -67,8 +67,8 @@ class ItemListSwaggerSerializer(serializers.Serializer):
     created_at = serializers.DateTimeField(allow_null=True)
     is_wishlist = serializers.IntegerField()
     status = serializers.IntegerField()
-    reservation_user_id = serializers.CharField(allow_null=True)
-    reservation_user_name = serializers.CharField(allow_null=True)
+    user_id = serializers.CharField(allow_null=True)
+    user_name = serializers.CharField(allow_null=True)
 
 class ItemDetailSwaggerSerializer(serializers.Serializer):
     """ItemDetailView - 물품 상세 조회 결과 예시"""

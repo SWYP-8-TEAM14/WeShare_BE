@@ -8,7 +8,7 @@ class ItemRepository:
         INSERT INTO items
         (user_id, group_id, item_name, pickup_place, return_place, item_description, item_image, status,
          quantity, caution, created_at, deleted_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s)
         RETURNING item_id
         """
 
@@ -20,7 +20,7 @@ class ItemRepository:
             data.get("return_place", ""),
             data.get("item_description", ""),
             data.get("item_image", ""),
-            data.get("status", 1),
+            data.get("status", 0),
             data.get("quantity", 1),
             data.get("caution", ""),
             data.get("created_at", None),
@@ -40,8 +40,11 @@ class ItemRepository:
             deleted_count = cursor.rowcount 
         return deleted_count
 
-    def get_item_list(self, user_id: int) -> list[dict]:
-        sql = """
+    def get_item_list(self, group_id: int, user_id: int, sorted: str) -> list[dict]:
+        if sorted.upper() not in ("ASC", "DESC"):
+            raise ValueError("Invalid sort order. Use 'ASC' or 'DESC'")
+        
+        sql = f"""
         SELECT
             i.group_id,
             g.group_name,
@@ -52,22 +55,28 @@ class ItemRepository:
             i.created_at,
             i.status,
             0   AS is_wishlist,
-            NULL AS reservation_user_id,
-            NULL AS reservation_user_name
+            i.user_id AS reservation_user_id,
+            u.username AS reservation_user_name
         FROM items i
         JOIN groups_group g ON i.group_id = g.group_id
-        WHERE i.user_id = %s
-        ORDER BY i.created_at DESC NULLS LAST
+        JOIN groups_groupmember gm ON i.group_id = gm.group_id
+        LEFT JOIN auth_user u ON i.user_id = u.id
+        WHERE gm.user_id = %s
         """
+
+        params = [user_id]
+        if group_id != 0:
+            sql += " AND i.group_id = %s"
+            params.append(group_id)
+
+        sql += f" ORDER BY i.created_at {sorted} NULLS LAST LIMIT 6"
+
         with connection.cursor() as cursor:
-            cursor.execute(sql, [user_id])
+            cursor.execute(sql, params)
             rows = cursor.fetchall()
             col_names = [desc[0] for desc in cursor.description]
 
-        result_list = []
-        for row in rows:
-            row_dict = dict(zip(col_names, row))
-            result_list.append(row_dict)
+        result_list = [dict(zip(col_names, row)) for row in rows]
         return result_list
 
     def get_item_detail(self, item_id: int) -> dict | None:
@@ -101,13 +110,13 @@ class ItemRepository:
 
         return dict(zip(col_names, row))
     
-    def reserve_item(self, user_id: int, item_id: int, start_time: str, end_time: str):
+    def reserve_item(self, user_id: int, item_id: int, rental_start: str, rental_end: str):
         sql = """
-        INSERT INTO reservations
-        (user_id, item_id, start_time, end_time, reservation_date, status, created_at)
-        VALUES (%s, %s, %s, %s, NOW(), 'RESERVED', NOW())
+        INSERT INTO rental_records
+        (user_id, item_id, rental_start, rental_end, actual_return, rental_status, pickup_image, return_image, created_at)
+        VALUES (%s, %s, %s, %s, null, 1, null, null, NOW())
         """
-        params = [user_id, item_id, start_time, end_time]
+        params = [user_id, item_id, rental_start, rental_end]
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
 
@@ -117,8 +126,8 @@ class ItemRepository:
             r.reservation_id,
             r.user_id,
             r.item_id,
-            r.start_time,
-            r.end_time,
+            r.rental_start,
+            r.rental_end,
             r.status,
             r.created_at AS reservation_created,
             i.item_name,
@@ -127,7 +136,7 @@ class ItemRepository:
         FROM reservations r
         JOIN items i ON r.item_id = i.item_id
         WHERE r.user_id = %s
-          AND r.status = 'RESERVED'
+          AND r.status = 1
         ORDER BY r.created_at DESC
         """
         with connection.cursor() as cursor:
@@ -143,11 +152,11 @@ class ItemRepository:
     
     def pickup_item(self, user_id: int, item_id: int, pickup_time: str, image: str) -> dict | None:
         find_sql = """
-        SELECT start_time, end_time
+        SELECT rental_start, rental_end
         FROM reservations
         WHERE user_id = %s
           AND item_id = %s
-          AND status = 'RESERVED'
+          AND status = 1
         ORDER BY created_at DESC
         LIMIT 1
         """
@@ -157,7 +166,7 @@ class ItemRepository:
         if not row:
             return None 
         
-        start_time, end_time = row 
+        rental_start, rental_end = row 
 
         insert_sql = """
         INSERT INTO rental_records
@@ -165,14 +174,14 @@ class ItemRepository:
         VALUES (%s, %s, %s, %s, 'ON_RENT', %s, NOW())
         RETURNING rental_id
         """
-        params = [user_id, item_id, pickup_time, end_time, image]
+        params = [user_id, item_id, pickup_time, rental_end, image]
         with connection.cursor() as cursor:
             cursor.execute(insert_sql, params)
         return {
             "user_id": user_id,
             "item_id": item_id,
-            "start_time": pickup_time, 
-            "end_time": str(end_time), 
+            "rental_start": pickup_time, 
+            "rental_end": str(rental_end), 
         }
     
 
@@ -189,8 +198,8 @@ class ItemRepository:
             i.status AS item_status,   -- items 테이블의 status
             i.quantity,
             i.caution,
-            r.rental_start AS start_time,
-            r.rental_end   AS end_time
+            r.rental_start,
+            r.rental_end
         FROM rental_records r
         JOIN items i ON r.item_id = i.item_id
         JOIN groups g ON i.group_id = g.group_id
@@ -239,6 +248,6 @@ class ItemRepository:
         return {
             "user_id": user_id,
             "item_id": item_id,
-            "start_time": str(rental_start),
-            "end_time": str(rental_end),
+            "rental_start": str(rental_start),
+            "rental_end": str(rental_end),
         }
