@@ -1,0 +1,1061 @@
+openapi: 3.0.3
+info:
+  title: WeShare API
+  version: 1.0.0
+paths:
+  /api/v1/delete/:
+    delete:
+      operationId: v1_delete_destroy
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/login/:
+    get:
+      operationId: v1_login_retrieve
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: v1_login_update
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/logout/:
+    post:
+      operationId: v1_logout_create
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/patch/:
+    patch:
+      operationId: v1_patch_partial_update
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/shareditems/:
+    get:
+      operationId: v1_shareditems_list
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+          description: ''
+    post:
+      operationId: v1_shareditems_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Item'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Item'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+          description: ''
+  /api/v1/shareditems/{item_id}/:
+    get:
+      operationId: v1_shareditems_retrieve
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this item.
+        required: true
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+          description: ''
+    put:
+      operationId: v1_shareditems_update
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this item.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Item'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Item'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+          description: ''
+    patch:
+      operationId: v1_shareditems_partial_update
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this item.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedItem'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedItem'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedItem'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+          description: ''
+    delete:
+      operationId: v1_shareditems_destroy
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this item.
+        required: true
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/shareditems/{item_id}/reserve/:
+    post:
+      operationId: v1_shareditems_reserve_create
+      description: 물품 예약 API
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this item.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Item'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Item'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+          description: ''
+  /api/v1/sharedrentals/:
+    get:
+      operationId: v1_sharedrentals_list
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RentalRecord'
+          description: ''
+    post:
+      operationId: v1_sharedrentals_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RentalRecord'
+          description: ''
+  /api/v1/sharedrentals/{rental_id}/:
+    get:
+      operationId: v1_sharedrentals_retrieve
+      parameters:
+      - in: path
+        name: rental_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this rental record.
+        required: true
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RentalRecord'
+          description: ''
+    put:
+      operationId: v1_sharedrentals_update
+      parameters:
+      - in: path
+        name: rental_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this rental record.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RentalRecord'
+          description: ''
+    patch:
+      operationId: v1_sharedrentals_partial_update
+      parameters:
+      - in: path
+        name: rental_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this rental record.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRentalRecord'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRentalRecord'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRentalRecord'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RentalRecord'
+          description: ''
+    delete:
+      operationId: v1_sharedrentals_destroy
+      parameters:
+      - in: path
+        name: rental_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this rental record.
+        required: true
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/sharedrentals/{rental_id}/pickup/:
+    post:
+      operationId: v1_sharedrentals_pickup_create
+      description: 픽업 인증 API
+      parameters:
+      - in: path
+        name: rental_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this rental record.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RentalRecord'
+          description: ''
+  /api/v1/sharedrentals/{rental_id}/return_item/:
+    post:
+      operationId: v1_sharedrentals_return_item_create
+      description: 반납 인증 API
+      parameters:
+      - in: path
+        name: rental_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this rental record.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RentalRecord'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RentalRecord'
+          description: ''
+  /api/v1/sharedreservations/:
+    get:
+      operationId: v1_sharedreservations_list
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+          description: ''
+    post:
+      operationId: v1_sharedreservations_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+  /api/v1/sharedreservations/{book_id}/:
+    get:
+      operationId: v1_sharedreservations_retrieve
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this reservation.
+        required: true
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+    put:
+      operationId: v1_sharedreservations_update
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this reservation.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+    patch:
+      operationId: v1_sharedreservations_partial_update
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this reservation.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedReservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedReservation'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+    delete:
+      operationId: v1_sharedreservations_destroy
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: integer
+        description: A unique integer value identifying this reservation.
+        required: true
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/sharedreservations/user_reservations/:
+    post:
+      operationId: v1_sharedreservations_user_reservations_create
+      description: 사용자의 예약 목록 조회
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+          description: ''
+  /api/v1/signup/:
+    post:
+      operationId: v1_signup_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Signup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Signup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Signup'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+  /api/v1/user/:
+    get:
+      operationId: v1_user_retrieve
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: v1_user_update
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/user/auth/kakao/login/:
+    get:
+      operationId: v1_user_auth_kakao_login_retrieve
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+  /api/v1/user/auth/kakao/login/callback/:
+    get:
+      operationId: v1_user_auth_kakao_login_callback_retrieve
+      description: 카카오 로그인 콜백 처리
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+    post:
+      operationId: v1_user_auth_kakao_login_callback_create
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/user/auth/kakao/reissue/:
+    post:
+      operationId: v1_user_auth_kakao_reissue_create
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/user/auth/naver/login/:
+    get:
+      operationId: v1_user_auth_naver_login_retrieve
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+  /api/v1/user/auth/naver/login/callback/:
+    get:
+      operationId: v1_user_auth_naver_login_callback_retrieve
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/user/auth/naver/reissue/:
+    post:
+      operationId: v1_user_auth_naver_reissue_create
+      tags:
+      - v1
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+components:
+  schemas:
+    Item:
+      type: object
+      properties:
+        item_id:
+          type: integer
+          readOnly: true
+        item_name:
+          type: string
+          maxLength: 255
+        item_description:
+          type: string
+          nullable: true
+        item_image:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        caution:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        group:
+          type: integer
+          nullable: true
+      required:
+      - created_at
+      - item_id
+      - item_name
+    PatchedItem:
+      type: object
+      properties:
+        item_id:
+          type: integer
+          readOnly: true
+        item_name:
+          type: string
+          maxLength: 255
+        item_description:
+          type: string
+          nullable: true
+        item_image:
+          type: string
+          nullable: true
+        status:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        caution:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        group:
+          type: integer
+          nullable: true
+    PatchedRentalRecord:
+      type: object
+      properties:
+        rental_id:
+          type: integer
+          readOnly: true
+        rental_start:
+          type: string
+          format: date-time
+        rental_end:
+          type: string
+          format: date-time
+        actual_return:
+          type: string
+          format: date-time
+          nullable: true
+        rental_status:
+          type: string
+          maxLength: 50
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        user:
+          type: integer
+        item:
+          type: integer
+    PatchedReservation:
+      type: object
+      properties:
+        book_id:
+          type: integer
+          readOnly: true
+        book_date:
+          type: string
+          format: date-time
+        status:
+          type: string
+          maxLength: 50
+        user:
+          type: integer
+        item:
+          type: integer
+    RentalRecord:
+      type: object
+      properties:
+        rental_id:
+          type: integer
+          readOnly: true
+        rental_start:
+          type: string
+          format: date-time
+        rental_end:
+          type: string
+          format: date-time
+        actual_return:
+          type: string
+          format: date-time
+          nullable: true
+        rental_status:
+          type: string
+          maxLength: 50
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        user:
+          type: integer
+        item:
+          type: integer
+      required:
+      - created_at
+      - item
+      - rental_end
+      - rental_id
+      - rental_start
+      - rental_status
+      - user
+    Reservation:
+      type: object
+      properties:
+        book_id:
+          type: integer
+          readOnly: true
+        book_date:
+          type: string
+          format: date-time
+        status:
+          type: string
+          maxLength: 50
+        user:
+          type: integer
+        item:
+          type: integer
+      required:
+      - book_id
+      - item
+      - status
+      - user
+    Signup:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 255
+        username:
+          type: string
+          maxLength: 20
+        profile_image:
+          type: string
+          nullable: true
+          maxLength: 255
+        phone_number:
+          type: string
+          nullable: true
+      required:
+      - email
+      - password
+      - username
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"

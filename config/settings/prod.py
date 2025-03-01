@@ -4,7 +4,7 @@ from config.settings.base import *
 
 INSTALLED_APPS = BASE_INSTALLED_APPS
 
-ENV = dotenv_values(BASE_DIR / "envs/.env.local")
+ENV = dotenv_values(BASE_DIR / "envs/.env.prod")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = ENV.get("SECRET_KEY")
@@ -20,10 +20,10 @@ ALLOWED_HOSTS = ["223.130.156.2", "127.0.0.1", "0.0.0.0"]
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "HOST": ENV.get("POSTGRES_HOST", "localhost"),
-        "NAME": ENV.get("POSTGRES_DBNAME", "weshare"),
-        "USER": ENV.get("POSTGRES_USER", "hwangjiwon"),
-        "PASSWORD": ENV.get("POSTGRES_PASSWORD", "900326"),
+        "HOST": ENV.get("POSTGRES_HOST"),
+        "NAME": ENV.get("POSTGRES_DBNAME"),
+        "USER": ENV.get("POSTGRES_USER"),
+        "PASSWORD": ENV.get("POSTGRES_PASSWORD"),
         "PORT": ENV.get("POSTGRES_PORT", 5432),
     }
 }
