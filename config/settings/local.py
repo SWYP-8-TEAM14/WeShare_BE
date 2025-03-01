@@ -23,6 +23,9 @@ DATABASES = {
         "USER": ENV.get("POSTGRES_USER", "hwangjiwon"),
         "PASSWORD": ENV.get("POSTGRES_PASSWORD", "900326"),
         "PORT": ENV.get("POSTGRES_PORT", 5432),
+        "OPTIONS": {
+            'search_path': 'public',
+        },
     }
 }
 
