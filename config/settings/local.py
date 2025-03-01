@@ -18,13 +18,13 @@ ALLOWED_HOSTS = ["*"]
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "HOST": ENV.get("POSTGRES_HOST", "localhost"),
-        "NAME": ENV.get("POSTGRES_DBNAME", "weshare"),
-        "USER": ENV.get("POSTGRES_USER", "hwangjiwon"),
-        "PASSWORD": ENV.get("POSTGRES_PASSWORD", "900326"),
-        "PORT": ENV.get("POSTGRES_PORT", 5432),
+        "HOST": ENV.get("POSTGRES_HOST"),
+        "NAME": ENV.get("POSTGRES_DBNAME"),
+        "USER": ENV.get("POSTGRES_USER"),
+        "PASSWORD": ENV.get("POSTGRES_PASSWORD"),
+        "PORT": ENV.get("POSTGRES_PORT"),
         "OPTIONS": {
-            'search_path': 'public',
+            "options": "-c search_path=weshare"
         },
     }
 }
