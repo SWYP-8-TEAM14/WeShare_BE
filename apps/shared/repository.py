@@ -6,9 +6,9 @@ class ItemRepository:
     def create_item(self, data: dict) -> int:
         insert_sql = """
         INSERT INTO items
-        (user_id, group_id, item_name, pickup_place, return_place, item_description, item_image, status,
-         quantity, caution, created_at, deleted_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), %s)
+        (user_id, group_id, item_name, pickup_place, return_place, item_description, status,
+         quantity, caution, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
         RETURNING item_id
         """
 
@@ -19,12 +19,9 @@ class ItemRepository:
             data.get("pickup_place", ""),
             data.get("return_place", ""),
             data.get("item_description", ""),
-            data.get("item_image", ""),
             data.get("status", 0),
             data.get("quantity", 1),
             data.get("caution", ""),
-            data.get("created_at", None),
-            data.get("deleted_at", None),
         ]
 
         with connection.cursor() as cursor:
@@ -32,6 +29,16 @@ class ItemRepository:
             row = cursor.fetchone()
             new_id = row[0]
         return new_id
+    
+    def create_item_image(self, item_id: int, image_url: str):
+        image_url = 'https://kr.object.ncloudstorage.com/weshare/groups/C.JPG' # s3 업로드 기능 추가되면 삭제
+        insert_sql = """
+        INSERT INTO item_images (item_id, image_url, created_at)
+        VALUES (%s, %s, NOW())
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(insert_sql, [item_id, image_url])
 
     def delete_item(self, item_id: int) -> int:
         sql = "DELETE FROM items WHERE item_id = %s"
@@ -50,25 +57,32 @@ class ItemRepository:
             g.group_name,
             i.item_id,
             i.item_name,
-            i.item_image,
+            COALESCE(ARRAY_AGG(im.image_url) FILTER (WHERE im.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls,
             i.quantity,
             i.created_at,
-            i.status,
-            0   AS is_wishlist,
+            i.status,  
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM wishlists w WHERE w.user_id = %s AND w.item_id = i.item_id
+                ) THEN 1 
+                ELSE 0 
+            END AS is_wishlist,
             i.user_id AS reservation_user_id,
             u.username AS reservation_user_name
         FROM items i
         JOIN groups_group g ON i.group_id = g.group_id
         JOIN groups_groupmember gm ON i.group_id = gm.group_id
+        LEFT JOIN item_images im ON im.item_id = i.item_id
         LEFT JOIN auth_user u ON i.user_id = u.id
         WHERE gm.user_id = %s
         """
 
-        params = [user_id]
+        params = [user_id, user_id]
         if group_id != 0:
             sql += " AND i.group_id = %s"
             params.append(group_id)
 
+        sql += f" GROUP BY i.item_id, i.group_id, g.group_name, i.item_name, i.quantity, i.created_at, i.status, i.user_id, u.username"
         sql += f" ORDER BY i.created_at {sorted} NULLS LAST LIMIT 6"
 
         with connection.cursor() as cursor:
@@ -91,15 +105,18 @@ class ItemRepository:
 			i.pickup_place,
 			i.return_place,
             i.item_description,
-            i.item_image,
+            COALESCE(ARRAY_AGG(im.image_url) FILTER (WHERE im.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls,
             i.status,
             i.quantity,
             i.caution,
             i.created_at
         FROM items i
         JOIN groups_group g ON i.group_id = g.group_id
+        LEFT JOIN item_images im ON im.item_id = i.item_id
 		JOIN auth_user u ON i.user_id = u.id
         WHERE i.item_id = %s
+        GROUP BY i.user_id, u.username, i.group_id, g.group_name, i.item_id, i.item_name, i.pickup_place, 
+            i.return_place, i.item_description, i.status, i.quantity, i.caution, i.created_at
         """
         with connection.cursor() as cursor:
             cursor.execute(sql, [item_id])
@@ -120,35 +137,53 @@ class ItemRepository:
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
 
-    def get_reserved_items(self, user_id: int) -> list[dict]:
+    def get_reserved_items(self, group_id: int, user_id: int, sorted: str) -> list[dict]:
+        if sorted.upper() not in ("ASC", "DESC"):
+            raise ValueError("Invalid sort order. Use 'ASC' or 'DESC'")
+
         sql = """
         SELECT
-            r.reservation_id,
-            r.user_id,
-            r.item_id,
-            r.rental_start,
-            r.rental_end,
-            r.status,
-            r.created_at AS reservation_created,
+            i.group_id,
+            g.group_name,
+            i.item_id,
             i.item_name,
-            i.item_description,
-            i.item_image
-        FROM reservations r
+            COALESCE(ARRAY_AGG(im.image_url) FILTER (WHERE im.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls,
+            i.quantity,
+            i.created_at,
+            i.status,
+            MAX(r.rental_start) AS rental_start,
+            MAX(r.rental_end) AS rental_end,
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM wishlists w WHERE w.user_id = %s AND w.item_id = i.item_id
+                ) THEN 1 
+                ELSE 0 
+            END AS is_wishlist,
+            i.user_id AS reservation_user_id,
+            u.username AS reservation_user_name
+        FROM rental_records r
         JOIN items i ON r.item_id = i.item_id
+        JOIN groups_group g ON i.group_id = g.group_id
+        LEFT JOIN item_images im ON im.item_id = i.item_id
+        LEFT JOIN auth_user u ON i.user_id = u.id
         WHERE r.user_id = %s
-          AND r.status = 1
-        ORDER BY r.created_at DESC
         """
+
+        params = [user_id, user_id]
+        if group_id != 0:
+            sql += " AND i.group_id = %s"
+            params.append(group_id)
+            
+        sql += f" GROUP BY i.item_id, i.group_id, g.group_name, i.item_name, i.quantity, i.created_at, i.status, i.user_id, u.username, r.rental_start"
+        sql += f" ORDER BY r.rental_start DESC, i.created_at {sorted} NULLS LAST LIMIT 6"
+        
         with connection.cursor() as cursor:
-            cursor.execute(sql, [user_id])
+            cursor.execute(sql, params)
             rows = cursor.fetchall()
             col_names = [desc[0] for desc in cursor.description]
 
-        result = []
-        for row in rows:
-            row_dict = dict(zip(col_names, row))
-            result.append(row_dict)
-        return result
+        return [dict(zip(col_names, row)) for row in rows]
+    
     
     def pickup_item(self, user_id: int, item_id: int, pickup_time: str, image: str) -> dict | None:
         find_sql = """
@@ -194,7 +229,7 @@ class ItemRepository:
             i.item_id,
             i.item_name,
             i.item_description,
-            i.item_image,
+            COALESCE(ARRAY_AGG(im.image_url) FILTER (WHERE im.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls,
             i.status AS item_status,   -- items 테이블의 status
             i.quantity,
             i.caution,
@@ -203,8 +238,10 @@ class ItemRepository:
         FROM rental_records r
         JOIN items i ON r.item_id = i.item_id
         JOIN groups g ON i.group_id = g.group_id
+        LEFT JOIN item_images im ON im.item_id = i.item_id
         WHERE r.user_id = %s
           AND r.rental_status = 'ON_RENT'
+        GROUP BY r.user_id, i.group_id, g.group_name, i.item_id, i.item_name, i.item_description, i.status, i.quantity, i.caution, r.rental_start, r.rental_end
         ORDER BY r.created_at DESC
         """
         with connection.cursor() as cursor:
@@ -251,3 +288,32 @@ class ItemRepository:
             "rental_start": str(rental_start),
             "rental_end": str(rental_end),
         }
+    
+class WishlistRepository:
+    def add_wishlist(self, user_id: int, item_id: int) -> bool:
+        check_sql = "SELECT COUNT(*) FROM wishlists WHERE user_id = %s AND item_id = %s"
+        insert_sql = "INSERT INTO wishlists (user_id, item_id) VALUES (%s, %s)"
+
+        with connection.cursor() as cursor:
+            cursor.execute(check_sql, [user_id, item_id])
+            is_existing = cursor.fetchone()[0]
+
+            if is_existing:
+                return False
+            
+            cursor.execute(insert_sql, [user_id, item_id])
+            return True
+
+    def remove_wishlist(self, user_id: int, item_id: int) -> bool:
+        check_sql = "SELECT COUNT(*) FROM wishlists WHERE user_id = %s AND item_id = %s"
+        delete_sql = "DELETE FROM wishlists WHERE user_id = %s AND item_id = %s"
+
+        with connection.cursor() as cursor:
+            cursor.execute(check_sql, [user_id, item_id])
+            is_existing = cursor.fetchone()[0]
+
+            if not is_existing:
+                return False
+
+            cursor.execute(delete_sql, [user_id, item_id])
+            return True

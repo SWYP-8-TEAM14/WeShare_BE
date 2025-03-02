@@ -8,7 +8,8 @@ from .views import (
     ItemReserveListView,
     ItemPickupView,
     ItemReturnableListView,
-    ItemReturnView
+    ItemReturnView,
+    WishlistToggleView
 )
 
 urlpatterns = [
@@ -20,4 +21,6 @@ urlpatterns = [
     path("items/reserve/list", ItemReserveListView.as_view()),
     path("items/pickup", ItemPickupView.as_view()),
     path("items/return/list", ItemReturnableListView.as_view()),
+    path("items/return", ItemReturnView.as_view()),
+    path("wishlist/", WishlistToggleView.as_view()),
 ]

@@ -6,8 +6,9 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from drf_spectacular.utils import extend_schema, OpenApiResponse
+from .utils import upload_to_ncp_storage
 
-from .repository import ItemRepository
+from .repository import ItemRepository, WishlistRepository
 from .serializers import (
     ItemAddSwaggerSerializer,
     ItemListSwaggerSerializer,
@@ -17,8 +18,10 @@ from .serializers import (
     ItemDetailRequestSerializer,
     ItemDeleteRequestSerializer,
     ItemUserListRequestSerializer,
-    ItemReserveRequestSerializer
+    ItemReserveRequestSerializer,
+    WishListToggleRequestSerializer
 )
+
 
 class ItemAddView(APIView):
     """
@@ -32,7 +35,7 @@ class ItemAddView(APIView):
 
     @extend_schema(
         summary="물품 등록",
-        description="신규 물품을 등록합니다.",
+        description="신규 물품을 등록합니다. images 리스트에 파일 업로드 해주세요(postman 테스트 가능, 스웨그 불가)",
         request=ItemAddSwaggerSerializer,
         responses={
             201: OpenApiResponse(
@@ -47,6 +50,8 @@ class ItemAddView(APIView):
     )
     def post(self, request):
         data = request.data
+        images = request.FILES.getlist("images")
+
         if not data.get("user_id") and data.get("user_id") != 0:
             return Response({
                 "Result": 0,
@@ -68,6 +73,14 @@ class ItemAddView(APIView):
 
         try:
             new_id = self.repository.create_item(data)
+
+            image_urls = []
+            for image in images[:4]:
+                image_url = upload_to_ncp_storage(image)
+                image_urls.append(image_url)
+
+                self.repository.create_item_image(new_id, image_url)
+
         except Exception as e:
             return Response({
                 "Result": 0,
@@ -283,7 +296,7 @@ class ItemReserveListView(APIView):
         self.repository = ItemRepository()
 
     @extend_schema(
-        summary="예약 물품 조회",
+        summary="예약한 물품 조회",
         description="특정 user 가 예약한 물품 목록을 조회합니다.",
         request=ItemUserListRequestSerializer,
         responses={
@@ -454,3 +467,62 @@ class ItemReturnView(APIView):
             "Message":"",
             "data": str(result)
         }, status=200)
+
+
+class WishlistToggleView(APIView):
+    """
+    POST /api/v1/wishlist/
+    """
+    permission_classes = [AllowAny]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = WishlistRepository()
+
+    @extend_schema(
+        summary="찜 추가/삭제",
+        description="찜 추가, 삭제 (1: 추가, 0: 삭제)",
+        request=WishListToggleRequestSerializer,
+        responses={
+            201: OpenApiResponse(
+                response=CommonResponseSerializer,
+                description="등록 성공 (Result=1)"
+            ),
+            400: OpenApiResponse(
+                response=CommonResponseSerializer,
+                description="등록 실패 (Result=0)"
+            )
+        },
+    )
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        item_id = request.data.get("item_id")
+        is_wishlist = request.data.get("is_wishlist") # 1: 추가, 0: 삭제
+
+
+        if not user_id and user_id != 0:
+            return Response({"Result": 0, "Message": "user_id가 필요합니다.", "data": ""}, status=400)
+        if not item_id and item_id != 0:
+            return Response({"Result": 0, "Message": "item_id가 필요합니다.", "data": ""}, status=400)
+        if is_wishlist not in [0, 1]:
+            return Response({"Result": 0, "Message": "is_wishlist 값은 0(삭제) 또는 1(추가)만 가능합니다.", "data": ""}, status=400)
+
+        try:
+            if is_wishlist == 1:
+                # 찜 추가
+                is_added = self.repository.add_wishlist(user_id, item_id)
+                if is_added:
+                    return Response({"Result": 1, "Message": "찜 추가됨", "data": {"is_wishlist": 1}}, status=201)
+                else:
+                    return Response({"Result": 0, "Message": "이미 찜한 항목입니다.", "data": ""}, status=400)
+
+            else:
+                # 찜 삭제
+                is_deleted = self.repository.remove_wishlist(user_id, item_id)
+                if is_deleted:
+                    return Response({"Result": 1, "Message": "찜 삭제됨", "data": {"is_wishlist": 0}}, status=200)
+                else:
+                    return Response({"Result": 0, "Message": "찜한 항목이 아닙니다.", "data": ""}, status=400)
+
+        except Exception as e:
+            return Response({"Result": 0, "Message": str(e), "data": ""}, status=500)
