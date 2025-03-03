@@ -19,7 +19,15 @@ from .serializers import (
     ItemDeleteRequestSerializer,
     ItemUserListRequestSerializer,
     ItemReserveRequestSerializer,
-    WishListToggleRequestSerializer
+    WishListToggleRequestSerializer,
+    ItemDetailResponseSerializer,
+    ItemListResponseSerializer,
+    ItemReserveResponseSerializer,
+    ItemReserveListResponseSerializer,
+    ItemPickupResponseSerializer,
+    ItemReturnableListResponseSerializer,
+    ItemReturnResponseSerializer,
+    WishlistToggleResponseSerializer
 )
 
 
@@ -43,7 +51,6 @@ class ItemAddView(APIView):
                 description="등록 성공 (Result=1)"
             ),
             400: OpenApiResponse(
-                response=CommonResponseSerializer,
                 description="등록 실패 (Result=0)"
             )
         },
@@ -145,11 +152,10 @@ class ItemView(APIView):
         request=ItemListRequestSerializer,
         responses={
             200: OpenApiResponse(
-                response=CommonResponseSerializer,
+                response=ItemListResponseSerializer,
                 description="조회 성공 (Result=1)"
             ),
             400: OpenApiResponse(
-                response=CommonResponseSerializer,
                 description="조회 실패 (Result=0)"
             )
         },
@@ -211,15 +217,13 @@ class ItemDetailView(APIView):
         request=ItemDetailRequestSerializer,
         responses={
             200: OpenApiResponse(
-                response=CommonResponseSerializer,
+                response=ItemDetailResponseSerializer,
                 description="조회 성공 (Result=1)"
             ),
             400: OpenApiResponse(
-                response=CommonResponseSerializer,
                 description="조회 실패 (Result=0)"
             ),
             404: OpenApiResponse(
-                response=CommonResponseSerializer,
                 description="데이터 없음"
             )
         },
@@ -262,7 +266,7 @@ class ItemReserveView(APIView):
         description="물품 예약을 진행합니다. 물품 상태: (기본=0, 예약중=1, 픽업중=2)",
         request=ItemReserveRequestSerializer,
         responses={
-            200: OpenApiResponse(description="예약 성공 (Result=1)"),
+            200: OpenApiResponse(response=ItemReserveResponseSerializer, description="예약 성공 (Result=1)"),
             400: OpenApiResponse(description="에러 (Result=0)")
         }
     )
@@ -300,7 +304,7 @@ class ItemReserveListView(APIView):
         description="특정 user 가 예약한 물품 목록을 조회합니다.",
         request=ItemUserListRequestSerializer,
         responses={
-            200: OpenApiResponse(description="조회 성공 (Result=1)"),
+            200: OpenApiResponse(response=ItemReserveListResponseSerializer, description="조회 성공 (Result=1)"),
             400: OpenApiResponse(description="오류 (Result=0)")
         }
     )
@@ -354,7 +358,7 @@ class ItemPickupView(APIView):
         description="사용자가 예약한 물품을 실제로 픽업합니다.",
         request=None,
         responses={
-            200: OpenApiResponse(description="픽업 성공"),
+            200: OpenApiResponse(response=ItemPickupResponseSerializer, description="픽업 성공"),
             400: OpenApiResponse(description="에러"),
             404: OpenApiResponse(description="예약 내역 없음")
         }
@@ -401,7 +405,7 @@ class ItemReturnableListView(APIView):
         description="현재 대여중(rental_status='ON_RENT')인 물품 목록 조회",
         request=None,
         responses={
-            200: OpenApiResponse(description="조회 성공 (Result=1)"),
+            200: OpenApiResponse(response=ItemReturnableListResponseSerializer, description="조회 성공 (Result=1)"),
             400: OpenApiResponse(description="오류 (Result=0)")
         }
     )
@@ -436,7 +440,7 @@ class ItemReturnView(APIView):
         description="대여중인 물품을 반납 처리 (rental_records 업데이트)",
         request=None,
         responses={
-            200: OpenApiResponse(description="반납 완료 (Result=1)"),
+            200: OpenApiResponse(response=ItemReturnResponseSerializer, description="반납 완료 (Result=1)"),
             400: OpenApiResponse(description="오류 (Result=0)"),
             404: OpenApiResponse(description="반납할 내역 없음")
         }
@@ -485,11 +489,10 @@ class WishlistToggleView(APIView):
         request=WishListToggleRequestSerializer,
         responses={
             201: OpenApiResponse(
-                response=CommonResponseSerializer,
+                response=WishlistToggleResponseSerializer,
                 description="등록 성공 (Result=1)"
             ),
             400: OpenApiResponse(
-                response=CommonResponseSerializer,
                 description="등록 실패 (Result=0)"
             )
         },

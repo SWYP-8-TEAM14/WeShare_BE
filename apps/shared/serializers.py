@@ -91,9 +91,127 @@ class ItemDetailSwaggerSerializer(serializers.Serializer):
     caution = serializers.CharField(allow_blank=True)
     created_at = serializers.DateTimeField(allow_null=True)
 
-
 class CommonResponseSerializer(serializers.Serializer):
     """모든 응답의 공통 구조 {Result, Message, data}"""
     Result = serializers.IntegerField()
     Message = serializers.CharField()
     data = serializers.CharField()
+    
+
+class ItemDetailDataSerializer(serializers.Serializer):
+    """물품 상세 정보의 구조"""
+    user_id = serializers.IntegerField(help_text="등록한 사용자 ID")
+    username = serializers.CharField(help_text="사용자 이름")
+    group_id = serializers.IntegerField(help_text="그룹 ID")
+    group_name = serializers.CharField(help_text="그룹 이름")
+    item_id = serializers.IntegerField(help_text="물품 ID")
+    item_name = serializers.CharField(help_text="물품 이름")
+    pickup_place = serializers.CharField(help_text="픽업 장소", allow_blank=True)
+    return_place = serializers.CharField(help_text="반납 장소", allow_blank=True)
+    item_description = serializers.CharField(help_text="물품 설명", allow_blank=True)
+    image_urls = serializers.ListField(child=serializers.CharField(), help_text="이미지 URL 리스트")
+    status = serializers.IntegerField(help_text="물품 상태")
+    quantity = serializers.IntegerField(help_text="수량")
+    caution = serializers.CharField(help_text="주의사항", allow_blank=True)
+    created_at = serializers.DateTimeField(help_text="등록일")
+
+class ItemDetailResponseSerializer(CommonResponseSerializer):
+    """공통 응답 구조 + 물품 상세 조회 `data` 필드의 구체적인 구조"""
+    data = ItemDetailDataSerializer(help_text="물품 상세 정보")
+
+class ItemListDataSerializer(serializers.Serializer):
+    """물품 리스트의 단일 아이템 데이터 구조"""
+    group_id = serializers.IntegerField(help_text="그룹 ID")
+    group_name = serializers.CharField(help_text="그룹 이름")
+    item_id = serializers.IntegerField(help_text="물품 ID")
+    item_name = serializers.CharField(help_text="물품 이름")
+    image_urls = serializers.ListField(child=serializers.CharField(), help_text="이미지 URL 리스트")
+    quantity = serializers.IntegerField(help_text="수량")
+    created_at = serializers.DateTimeField(help_text="등록일")
+    is_wishlist = serializers.IntegerField(help_text="찜 여부 (1: 찜, 0: 안함)")
+    status = serializers.IntegerField(help_text="물품 상태")
+    reservation_user_id = serializers.IntegerField(help_text="예약자 ID", allow_null=True)
+    reservation_user_name = serializers.CharField(help_text="예약자 이름", allow_null=True)
+
+class ItemListResponseSerializer(CommonResponseSerializer):
+    """공통 응답 구조 + 물품 리스트 조회 `data` 필드의 구조"""
+    data = serializers.ListField(child=ItemListDataSerializer(), help_text="물품 목록 데이터")
+
+class ItemReserveDataSerializer(serializers.Serializer):
+    """물품 예약 정보 데이터 구조"""
+    item_id = serializers.IntegerField(help_text="예약된 물품 ID")
+    rental_start = serializers.DateTimeField(help_text="대여 시작 시간")
+    rental_end = serializers.DateTimeField(help_text="반납 예정 시간")
+
+class ItemReserveResponseSerializer(CommonResponseSerializer):
+    """공통 응답 구조 + 물품 예약 응답 `data` 필드의 구조"""
+    data = ItemReserveDataSerializer(help_text="예약된 물품 정보")
+
+class ItemReserveListDataSerializer(serializers.Serializer):
+    """예약한 물품 리스트의 단일 아이템 데이터 구조"""
+    group_id = serializers.IntegerField(help_text="그룹 ID")
+    group_name = serializers.CharField(help_text="그룹 이름")
+    item_id = serializers.IntegerField(help_text="물품 ID")
+    item_name = serializers.CharField(help_text="물품 이름")
+    image_urls = serializers.ListField(child=serializers.CharField(), help_text="이미지 URL 리스트")
+    quantity = serializers.IntegerField(help_text="수량")
+    created_at = serializers.DateTimeField(help_text="등록일")
+    status = serializers.IntegerField(help_text="물품 상태")
+    rental_start = serializers.DateTimeField(help_text="대여 시작 시간")
+    rental_end = serializers.DateTimeField(help_text="반납 예정 시간")
+    is_wishlist = serializers.IntegerField(help_text="찜 여부 (1: 찜, 0: 안함)")
+    reservation_user_id = serializers.IntegerField(help_text="예약자 ID", allow_null=True)
+    reservation_user_name = serializers.CharField(help_text="예약자 이름", allow_null=True)
+
+class ItemReserveListResponseSerializer(CommonResponseSerializer):
+    """공통 응답 구조 + 사용자 예약 물품 목록 조회 `data` 필드의 구조"""
+    data = serializers.ListField(child=ItemReserveListDataSerializer(), help_text="예약된 물품 목록 데이터")
+
+class ItemPickupDataSerializer(serializers.Serializer):
+    """픽업 인증 데이터 구조"""
+    user_id = serializers.IntegerField(help_text="사용자 ID")
+    item_id = serializers.IntegerField(help_text="픽업한 물품 ID")
+    rental_start = serializers.DateTimeField(help_text="대여 시작 시간")
+    rental_end = serializers.DateTimeField(help_text="반납 예정 시간")
+
+class ItemPickupResponseSerializer(CommonResponseSerializer):
+    """공통 응답 구조 + 픽업 인증 응답 `data` 필드의 구조"""
+    data = ItemPickupDataSerializer(help_text="픽업된 물품 정보")
+
+class ItemReturnableListDataSerializer(serializers.Serializer):
+    """반납 가능한 물품 리스트의 단일 아이템 데이터 구조"""
+    user_id = serializers.IntegerField(help_text="사용자 ID")
+    group_id = serializers.IntegerField(help_text="그룹 ID")
+    group_name = serializers.CharField(help_text="그룹 이름")
+    item_id = serializers.IntegerField(help_text="물품 ID")
+    item_name = serializers.CharField(help_text="물품 이름")
+    item_description = serializers.CharField(help_text="물품 설명", allow_blank=True)
+    image_urls = serializers.ListField(child=serializers.CharField(), help_text="이미지 URL 리스트")
+    item_status = serializers.IntegerField(help_text="물품 상태")
+    quantity = serializers.IntegerField(help_text="수량")
+    caution = serializers.CharField(help_text="주의사항", allow_blank=True)
+    rental_start = serializers.DateTimeField(help_text="대여 시작 시간")
+    rental_end = serializers.DateTimeField(help_text="반납 예정 시간")
+
+class ItemReturnableListResponseSerializer(CommonResponseSerializer):
+    """공통 응답 구조 + 반납 가능 물품 목록 조회 `data` 필드의 구조"""
+    data = serializers.ListField(child=ItemReturnableListDataSerializer(), help_text="반납 가능한 물품 목록 데이터")
+
+class ItemReturnDataSerializer(serializers.Serializer):
+    """반납 인증 데이터 구조"""
+    user_id = serializers.IntegerField(help_text="사용자 ID")
+    item_id = serializers.IntegerField(help_text="반납한 물품 ID")
+    rental_start = serializers.DateTimeField(help_text="대여 시작 시간")
+    rental_end = serializers.DateTimeField(help_text="반납 예정 시간")
+
+class ItemReturnResponseSerializer(CommonResponseSerializer):
+    """공통 응답 구조 + 반납 인증 응답 `data` 필드의 구조"""
+    data = ItemReturnDataSerializer(help_text="반납된 물품 정보")
+
+class WishlistToggleDataSerializer(serializers.Serializer):
+    """찜 토글(추가/삭제) 데이터 구조"""
+    is_wishlist = serializers.IntegerField(help_text="찜 여부 (1: 추가, 0: 삭제)")
+
+class WishlistToggleResponseSerializer(CommonResponseSerializer):
+    """공통 응답 구조 + 찜 추가/삭제 응답 `data` 필드의 구조"""
+    data = WishlistToggleDataSerializer(help_text="찜 상태 정보")
