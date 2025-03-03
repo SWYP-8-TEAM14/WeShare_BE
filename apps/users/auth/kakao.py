@@ -14,6 +14,8 @@ from apps.users.models import User
 from apps.users.serializers import KakaoLoginSerializer
 from config.settings.base import env
 
+from django.http import JsonResponse, HttpResponseRedirect
+import os
 
 class KakaoLoginView(APIView):
     permission_classes = [AllowAny]
@@ -124,18 +126,23 @@ class KakaoCallbackView(APIView):
 
         # JWT 토큰 생성
         refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
 
-        return Response(
-            {
-                "access_token": str(refresh.access_token),
-                "refresh_token": str(refresh),
-                "message": "User information retrieved successfully",
-                "user_id": user.id,
-                "created": created,  # True면 새로 가입된 것, False면 기존 로그인
-                "user_data": {
-                    "username": user.username,
-                    "email": user.email,
-                },
-            },
-            status=status.HTTP_200_OK,
+        response = HttpResponseRedirect(os.getenv("FRONTEND_REDIRECT_URI"))
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=False,
+            samesite="Lax",
         )
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=False,
+            samesite="Lax",
+        )
+
+        return response
