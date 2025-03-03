@@ -38,14 +38,18 @@ class KakaoCallbackView(APIView):
         responses={200: "사용자 정보 반환", 400: "Authorization code is missing"},
     )
     def get(self, request: Request) -> Response:
-        # GET 요청에서도 query_params로 인가 코드를 추출할 수 있습니다.
-        return self.post(request)
+        code = request.query_params.get("code")
+        if not code:
+            return Response({"error" : "Authorization code is missing"}, status=status.HTTP_400_BAD_REQUEST)
+        return self.process_code(code)
 
     def post(self, request: Request) -> Response:
         code = request.data.get("code") or request.query_params.get("code")
         if not code:
             return Response({"error": "Authorization code is missing"}, status=400)
+        return self.process_code(code)
 
+    def process_code(self, code):
         # Access Token 요청
         token_url = "https://kauth.kakao.com/oauth/token"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
