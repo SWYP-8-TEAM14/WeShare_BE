@@ -1,8 +1,7 @@
 from datetime import timedelta
 
 import requests
-from django.contrib.auth import authenticate
-from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
