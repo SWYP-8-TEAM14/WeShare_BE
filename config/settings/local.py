@@ -29,7 +29,7 @@ DATABASES = {
         "PASSWORD": ENV.get("POSTGRES_PASSWORD"),
         "PORT": ENV.get("POSTGRES_PORT"),
         "OPTIONS": {
-            "options": "-c search_path=weshare"
+            "options": "-c search_path=public" # weshare -> public으로 수정
         },
     }
 }

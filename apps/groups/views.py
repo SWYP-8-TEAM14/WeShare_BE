@@ -7,8 +7,6 @@ from rest_framework.views import APIView
 
 from .models import Group, GroupMember
 from .serializers import GroupSerializer, GroupCreateSerializer, GroupMemberSerializer
-# from ..shared.models import Item
-# from ..shared.serializers import ItemListSerializer
 
 
 class GroupListView(generics.ListAPIView):
@@ -68,8 +66,8 @@ class GroupDetailView(generics.RetrieveAPIView):
         except Group.DoesNotExist:
             return Response({"message" : "해당 그룹이 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND)
 
-        shared_items = list(Item.objects.filter(group=group))
-        shared_items_data =  ItemSerializer(shared_items, many=True).data
+        # shared_items = list(Item.objects.filter(group=group))
+        # shared_items_data =  ItemSerializer(shared_items, many=True).data
 
         # 유저가 이 그룹에 가입했는지 확인
         is_member = GroupMember.objects.filter(user=user, group=group).exists()
@@ -80,9 +78,9 @@ class GroupDetailView(generics.RetrieveAPIView):
 
         # 공유 물품 리스트는 가입한 사용자만 볼 수 있음
         shared_items_data = []
-        if is_member:
-            shared_items = list(Item.objects.filter(group=group))
-            shared_items_data = ItemSerializer(shared_items, many=True).data
+        # if is_member:
+            # shared_items = list(Item.objects.filter(group=group))
+            # shared_items_data = ItemSerializer(shared_items, many=True).data
 
         data = GroupSerializer(group).data
         data['is_member'] = is_member
@@ -112,16 +110,16 @@ class GroupManageView(APIView):
         total_members = GroupMember.objects.filter(group=group).count()
 
         # 공용 물품 리스트 (5개 표시)
-        shared_items = list(Item.objects.filter(group=group)[:5])
-        shared_items_data = ItemSerializer(shared_items, many=True).data
-        total_shared_items = Item.objects.filter(group=group).count()
+        # shared_items = list(Item.objects.filter(group=group)[:5])
+        # shared_items_data = ItemSerializer(shared_items, many=True).data
+        # total_shared_items = Item.objects.filter(group=group).count()
 
         data = GroupSerializer(group).data
         data['is_admin'] = True
         data['members'] = members_data
-        data['total_members'] = total_members
-        data['shared_items'] = shared_items_data
-        data['total_shared_items'] = total_shared_items
+        # data['total_members'] = total_members
+        # data['shared_items'] = shared_items_data
+        # data['total_shared_items'] = total_shared_items
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -148,7 +146,7 @@ class GroupSharedItemListView(APIView):
     """ 특정 그룹 내 전체 공유 물품 리스트 조회 """
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, group_id):
+    def get(self, request, group_id, shared_items_data=None):
         user = request.user
 
         try:
@@ -157,8 +155,9 @@ class GroupSharedItemListView(APIView):
             return Response({"message" : "해당 그룹이 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND)
 
         # 특정 그룹의 전체 공유 물품 리스트
-        shared_items = list(Item.objects.filter(group=group))
-        shared_items_data = ItemSerializer(shared_items, many=True).data
+        # shared_items = list(Item.objects.filter(group=group))
+        
+        # shared_items_data = ItemSerializer(shared_items, many=True).data
 
         return Response({"shared_items" : shared_items_data}, status=status.HTTP_200_OK)
 
