@@ -94,11 +94,14 @@ class UserUpdateView(APIView):
 
     def patch(self, request: Request) -> Response:
         try:
-            user = User.objects.get(id=request.user.id)
+            user = request.user
             serializer = UserUpdateSerializer(user, data=request.data, partial=True)
 
             if serializer.is_valid():
-                serializer.save()
+                validated_data = serializer.validated_data
+                allowed_fields = ["profile_image", "username"]
+                update_data = {k: v for k,v in validated_data.items() if k in allowed_fields}
+                serializer.save(**update_data)
                 return Response(
                     {"message": "회원 정보 수정 성공"},
                     status=status.HTTP_200_OK,
