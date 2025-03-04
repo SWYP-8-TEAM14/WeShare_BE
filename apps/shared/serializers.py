@@ -86,7 +86,7 @@ class ItemDetailSwaggerSerializer(serializers.Serializer):
     item_name = serializers.CharField()
     item_description = serializers.CharField(allow_blank=True)
     item_image = serializers.CharField(allow_blank=True)
-    status = serializers.IntegerField()
+    status = serializers.IntegerField(help_text="물품 상태 (0: 예약 가능, 1: 예약 완료, 2: 픽업 완료)")
     quantity = serializers.IntegerField()
     caution = serializers.CharField(allow_blank=True)
     created_at = serializers.DateTimeField(allow_null=True)

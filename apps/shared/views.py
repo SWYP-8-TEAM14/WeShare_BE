@@ -179,9 +179,9 @@ class ItemView(APIView):
                 "data": ""
             }, status=400)
         
-        sorted = "ASC"
+        sorted = "DESC"
         if sort == 2:
-            sorted = "DESC"
+            sorted = "ASC"
 
         try:
             result_list = self.repository.get_item_list(int(group_id), int(user_id), sorted)
@@ -329,9 +329,9 @@ class ItemReserveListView(APIView):
                 "data": ""
             }, status=400)
         
-        sorted = "ASC"
+        sorted = "DESC"
         if sort == 2:
-            sorted = "DESC"
+            sorted = "ASC"
 
         try:
             rows = self.repository.get_reserved_items(int(group_id), int(user_id), sorted)
