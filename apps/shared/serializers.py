@@ -97,20 +97,41 @@ class ItemListSwaggerSerializer(serializers.Serializer):
     user_id = serializers.CharField(allow_null=True)
     user_name = serializers.CharField(allow_null=True)
 
+# class ItemDetailSwaggerSerializer(serializers.Serializer):
+#     """ItemDetailView - 물품 상세 조회 결과 예시"""
+#     user_id = serializers.IntegerField()
+#     group_id = serializers.IntegerField()
+#     group_name = serializers.CharField()
+#     item_id = serializers.IntegerField()
+#     item_name = serializers.CharField()
+#     item_description = serializers.CharField(allow_blank=True)
+#     item_image = serializers.CharField(allow_blank=True)
+#     status = serializers.IntegerField(help_text="물품 상태 (0: 예약 가능, 1: 예약 완료, 2: 픽업 완료)")
+#     quantity = serializers.IntegerField()
+#     caution = serializers.CharField(allow_blank=True)
+#     created_at = serializers.DateTimeField(allow_null=True)
+
+class RentalHistorySerializer(serializers.Serializer):
+    """Rental History - 대여 내역"""
+    rental_start = serializers.DateTimeField()
+    rental_end = serializers.DateTimeField()
+    username = serializers.CharField()
+    profile_image = serializers.CharField(allow_blank=True)
+
 class ItemDetailSwaggerSerializer(serializers.Serializer):
-    """ItemDetailView - 물품 상세 조회 결과 예시"""
-    user_id = serializers.IntegerField()
+    """ItemView - 물품 리스트 조회 결과 예시"""
     group_id = serializers.IntegerField()
     group_name = serializers.CharField()
     item_id = serializers.IntegerField()
     item_name = serializers.CharField()
-    item_description = serializers.CharField(allow_blank=True)
     item_image = serializers.CharField(allow_blank=True)
-    status = serializers.IntegerField(help_text="물품 상태 (0: 예약 가능, 1: 예약 완료, 2: 픽업 완료)")
     quantity = serializers.IntegerField()
-    caution = serializers.CharField(allow_blank=True)
     created_at = serializers.DateTimeField(allow_null=True)
-
+    is_wishlist = serializers.IntegerField()
+    status = serializers.IntegerField()
+    user_id = serializers.IntegerField(allow_null=True)
+    user_name = serializers.CharField(allow_null=True)
+    rental_history = RentalHistorySerializer(many=True, required=False)  # rental_history 추가
 
 class CommonResponseSerializer(serializers.Serializer):
     """모든 응답의 공통 구조 {Result, Message, data}"""
