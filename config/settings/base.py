@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import environ
+from django.conf.global_settings import AUTH_USER_MODEL
 
 env = environ.Env(DEBUG=(bool, False))
 
@@ -44,6 +45,8 @@ OWN_APPS = [
 ]
 
 BASE_INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY + OWN_APPS
+
+AUTH_USER_MODEL = "auth.User"
 
 
 SPECTACULAR_SETTINGS = {
