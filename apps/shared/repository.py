@@ -131,9 +131,10 @@ class ItemRepository:
         sql = """
         INSERT INTO rental_records
         (user_id, item_id, rental_start, rental_end, actual_return, rental_status, pickup_image, return_image, created_at)
-        VALUES (%s, %s, %s, %s, null, 1, null, null, NOW())
+        VALUES (%s, %s, %s, %s, null, 1, null, null, NOW());
+        UPDATE items SET status = 1 where item_id = %s
         """
-        params = [user_id, item_id, rental_start, rental_end]
+        params = [user_id, item_id, rental_start, rental_end, item_id]
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
 
@@ -206,7 +207,7 @@ class ItemRepository:
         insert_sql = """
         INSERT INTO rental_records
         (user_id, item_id, rental_start, rental_end, rental_status, pickup_image, created_at)
-        VALUES (%s, %s, %s, %s, 'ON_RENT', %s, NOW())
+        VALUES (%s, %s, %s, %s, '2', %s, NOW())
         RETURNING rental_id
         """
         params = [user_id, item_id, pickup_time, rental_end, image]
@@ -240,7 +241,7 @@ class ItemRepository:
         JOIN groups g ON i.group_id = g.group_id
         LEFT JOIN item_images im ON im.item_id = i.item_id
         WHERE r.user_id = %s
-          AND r.rental_status = 'ON_RENT'
+          AND r.rental_status = '2'
         GROUP BY r.user_id, i.group_id, g.group_name, i.item_id, i.item_name, i.item_description, i.status, i.quantity, i.caution, r.rental_start, r.rental_end
         ORDER BY r.created_at DESC
         """
@@ -260,12 +261,13 @@ class ItemRepository:
         FROM rental_records
         WHERE user_id = %s
           AND item_id = %s
-          AND rental_status = 'ON_RENT'
+          AND rental_status = 'ON_RENT' -- 삭제하는 로직으로 대체
         ORDER BY created_at DESC
-        LIMIT 1
+        LIMIT 1;
+        UPDATE items SET status = 0 where item_id = %s
         """
         with connection.cursor() as cursor:
-            cursor.execute(find_sql, [user_id, item_id])
+            cursor.execute(find_sql, [user_id, item_id, item_id])
             row = cursor.fetchone()
         if not row:
             return None 
@@ -276,7 +278,7 @@ class ItemRepository:
         UPDATE rental_records
         SET actual_return = %s,
             return_image  = %s,
-            rental_status = 'RETURNED'
+            rental_status = 0
         WHERE rental_id = %s
         """
         with connection.cursor() as cursor:
