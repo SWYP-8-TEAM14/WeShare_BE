@@ -28,14 +28,14 @@ DATABASES = {
         "PASSWORD": ENV.get("POSTGRES_PASSWORD"),
         "PORT": ENV.get("POSTGRES_PORT"),
         "OPTIONS": {
-            "options": "-c search_path=public" # weshare -> public으로 수정
+            "options": "-c search_path=weshare" # 로컬 테스트 시 public 으로 수정
         },
     }
 }
 
 SWAGGER_SETTINGS = {
     "USE_SESSION_AUTH": False,
-    "DEFAULT_API_URL": "http://127.0.0.1:8000/",  # HTTPS URL로 명시
+    "DEFAULT_API_URL": "http://175.45.203.70:8000/",  # HTTPS URL로 명시
     "SECURITY_DEFINITIONS": {
         "Bearer": {  # JWT 인증 방식 정의
             "type": "apiKey",
