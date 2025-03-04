@@ -7,6 +7,8 @@ class ItemListRequestSerializer(serializers.Serializer):
     user_id = serializers.IntegerField(help_text="유저 ID")
     group_id = serializers.IntegerField(help_text="그룹 ID (전체=0)")
     sort = serializers.IntegerField(help_text="정렬 (최신순=1, 오래된순=2)")
+    sort = serializers.IntegerField(help_text="정렬 (최신순=1, 오래된순=2)")
+    is_all = serializers.BooleanField(help_text="전체 데이터 조회 여부 (전체=true, 부분(최대6개)=false)")
 
 class ItemDetailRequestSerializer(serializers.Serializer):
     """
@@ -21,7 +23,7 @@ class ItemDeleteRequestSerializer(serializers.Serializer):
     물품 삭제 시, Body로 전달하는 파라미터.
     """
     user_id = serializers.IntegerField(help_text="유저 ID")
-    item_id = serializers.IntegerField(help_text="아이템 ID")
+    item_id = serializers.ListField(child=serializers.IntegerField(), help_text="아이템 ID 리스트")
 
 class ItemUserListRequestSerializer(serializers.Serializer):
     """
@@ -47,6 +49,24 @@ class WishListToggleRequestSerializer(serializers.Serializer):
     user_id = serializers.IntegerField(help_text="유저 ID")
     item_id = serializers.IntegerField(help_text="아이템 ID")
     is_wishlist = serializers.IntegerField(help_text="찜 추가/삭제 (1: 추가, 0: 삭제)")
+
+class ItemPickupRequestSerializer(serializers.Serializer):
+    """
+    사용자 물품 픽업 시, Body로 전달하는 파라미터.
+    """
+    user_id = serializers.IntegerField(help_text="유저 ID")
+    item_id = serializers.IntegerField(help_text="아이템 ID")
+    pickup_time = serializers.DateTimeField(allow_null=True)
+    pickup_image = serializers.ListField(child=serializers.FileField(), required=False, allow_empty=True)
+
+class ItemReturnRequestSerializer(serializers.Serializer):
+    """
+    사용자 물품 픽업 시, Body로 전달하는 파라미터.
+    """
+    user_id = serializers.IntegerField(help_text="유저 ID")
+    item_id = serializers.IntegerField(help_text="아이템 ID")
+    return_time = serializers.DateTimeField(allow_null=True)
+    return_image = serializers.ListField(child=serializers.FileField(), required=False, allow_empty=True)
 
 
 class ItemAddSwaggerSerializer(serializers.Serializer):
@@ -86,7 +106,7 @@ class ItemDetailSwaggerSerializer(serializers.Serializer):
     item_name = serializers.CharField()
     item_description = serializers.CharField(allow_blank=True)
     item_image = serializers.CharField(allow_blank=True)
-    status = serializers.IntegerField()
+    status = serializers.IntegerField(help_text="물품 상태 (0: 예약 가능, 1: 예약 완료, 2: 픽업 완료)")
     quantity = serializers.IntegerField()
     caution = serializers.CharField(allow_blank=True)
     created_at = serializers.DateTimeField(allow_null=True)

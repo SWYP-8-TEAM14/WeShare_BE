@@ -27,7 +27,8 @@ from .serializers import (
     ItemPickupResponseSerializer,
     ItemReturnableListResponseSerializer,
     ItemReturnResponseSerializer,
-    WishlistToggleResponseSerializer
+    WishlistToggleResponseSerializer,
+    ItemPickupRequestSerializer,
 )
 
 
@@ -125,11 +126,11 @@ class ItemDeleteView(APIView):
         }
     )
     def post(self, request):
-        item_id = request.data.get("item_id")
-        if not item_id and item_id != 0:
+        item_ids = request.data.get("item_id")
+        if len(item_ids) == 0:
             return Response({"Result":0,"Message":"item_id가 필요합니다.","data":""}, status=400)
 
-        deleted_count = self.repository.delete_item(int(item_id))
+        deleted_count = self.repository.delete_item(list(item_ids))
         if deleted_count > 0:
             return Response({"Result":1,"Message":"","data":""}, status=200)
         else:
@@ -164,6 +165,7 @@ class ItemView(APIView):
         user_id = request.data.get("user_id")
         group_id = request.data.get("group_id")
         sort = request.data.get("sort")
+        is_all = request.data.get("is_all")
         if not user_id and user_id != 0:
             return Response({
                 "Result": 0,
@@ -185,12 +187,12 @@ class ItemView(APIView):
                 "data": ""
             }, status=400)
         
-        sorted = "ASC"
+        sorted = "DESC"
         if sort == 2:
-            sorted = "DESC"
-
+            sorted = "ASC"
+        
         try:
-            result_list = self.repository.get_item_list(int(group_id), int(user_id), sorted)
+            result_list = self.repository.get_item_list(int(group_id), int(user_id), sorted, is_all)
         except Exception as e:
             return Response({"Result": 0, "Message": str(e), "data": ""}, status=400)
 
@@ -333,9 +335,9 @@ class ItemReserveListView(APIView):
                 "data": ""
             }, status=400)
         
-        sorted = "ASC"
+        sorted = "DESC"
         if sort == 2:
-            sorted = "DESC"
+            sorted = "ASC"
 
         try:
             rows = self.repository.get_reserved_items(int(group_id), int(user_id), sorted)
@@ -356,7 +358,7 @@ class ItemPickupView(APIView):
     @extend_schema(
         summary="픽업 인증",
         description="사용자가 예약한 물품을 실제로 픽업합니다.",
-        request=None,
+        request=ItemPickupRequestSerializer,
         responses={
             200: OpenApiResponse(response=ItemPickupResponseSerializer, description="픽업 성공"),
             400: OpenApiResponse(description="에러"),
@@ -367,7 +369,6 @@ class ItemPickupView(APIView):
         user_id = request.data.get("user_id")
         item_id = request.data.get("item_id")
         pickup_time = request.data.get("pickup_time")
-        image = request.data.get("image","")
 
         if not user_id and user_id != 0:
             return Response({"Result":0,"Message":"(user_id, item_id, pickup_time)는 필수입니다.","data":""}, status=400)
@@ -377,7 +378,13 @@ class ItemPickupView(APIView):
             return Response({"Result":0,"Message":"(user_id, item_id, pickup_time)는 필수입니다.","data":""}, status=400)
 
         try:
-            result = self.repository.pickup_item(int(user_id), int(item_id), pickup_time, image)
+            pickup_image = request.FILES.getlist("pickup_image")
+            image_urls = []
+            for image in pickup_image[:4]:
+                image_url = upload_to_ncp_storage(image)
+                image_urls.append(image_url)
+
+            result = self.repository.pickup_item(int(user_id), int(item_id), pickup_time, image_urls)
         except Exception as e:
             return Response({"Result":0,"Message":str(e),"data":""}, status=400)
 
@@ -449,7 +456,6 @@ class ItemReturnView(APIView):
         user_id = request.data.get("user_id")
         item_id = request.data.get("item_id")
         return_time = request.data.get("return_time")
-        return_image = request.data.get("return_image","")
 
         if not user_id and user_id != 0:
             return Response({"Result":0,"Message":"필수필드(user_id, item_id, return_time) 누락","data":""}, status=400)
@@ -459,7 +465,12 @@ class ItemReturnView(APIView):
             return Response({"Result":0,"Message":"필수필드(user_id, item_id, return_time) 누락","data":""}, status=400)
 
         try:
-            result = self.repository.return_item(int(user_id), int(item_id), return_time, return_image)
+            return_image = request.FILES.getlist("return_image")
+            image_urls = []
+            for image in return_image[:4]:
+                image_url = upload_to_ncp_storage(image)
+                image_urls.append(image_url)
+            result = self.repository.return_item(int(user_id), int(item_id), return_time, image_urls)
         except Exception as e:
             return Response({"Result":0,"Message":str(e),"data":""}, status=400)
 
