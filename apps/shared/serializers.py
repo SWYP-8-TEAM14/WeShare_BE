@@ -119,7 +119,7 @@ class RentalHistorySerializer(serializers.Serializer):
     profile_image = serializers.CharField(allow_blank=True)
 
 class ItemDetailSwaggerSerializer(serializers.Serializer):
-    """ItemView - 물품 리스트 조회 결과 예시"""
+    """ItemView - 물품 상세 조회 조회 결과 예시"""
     group_id = serializers.IntegerField()
     group_name = serializers.CharField()
     item_id = serializers.IntegerField()
@@ -159,7 +159,7 @@ class ItemDetailDataSerializer(serializers.Serializer):
 
 class ItemDetailResponseSerializer(CommonResponseSerializer):
     """공통 응답 구조 + 물품 상세 조회 `data` 필드의 구체적인 구조"""
-    data = ItemDetailDataSerializer(help_text="물품 상세 정보")
+    data = ItemDetailSwaggerSerializer(help_text="물품 상세 정보")
 
 class ItemListDataSerializer(serializers.Serializer):
     """물품 리스트의 단일 아이템 데이터 구조"""
