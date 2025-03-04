@@ -7,7 +7,7 @@ class ItemRepository:
         insert_sql = """
         INSERT INTO items
         (user_id, group_id, item_name, pickup_place, return_place, item_description, status,
-         quantity, caution, created_at)
+        quantity, caution, created_at)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
         RETURNING item_id
         """
@@ -40,14 +40,15 @@ class ItemRepository:
         with connection.cursor() as cursor:
             cursor.execute(insert_sql, [item_id, image_url])
 
-    def delete_item(self, item_id: int) -> int:
-        sql = "DELETE FROM items WHERE item_id = %s"
+    def delete_item(self, item_ids: list) -> int:
+        placeholders = ', '.join(['%s'] * len(item_ids))
+        sql = f"DELETE FROM items WHERE item_id IN ({placeholders})"
         with connection.cursor() as cursor:
-            cursor.execute(sql, [item_id])
+            cursor.execute(sql, item_ids)
             deleted_count = cursor.rowcount 
         return deleted_count
 
-    def get_item_list(self, group_id: int, user_id: int, sorted: str) -> list[dict]:
+    def get_item_list(self, group_id: int, user_id: int, sorted: str, is_all: bool) -> list[dict]:
         if sorted.upper() not in ("ASC", "DESC"):
             raise ValueError("Invalid sort order. Use 'ASC' or 'DESC'")
         
@@ -83,7 +84,9 @@ class ItemRepository:
             params.append(group_id)
 
         sql += f" GROUP BY i.item_id, i.group_id, g.group_name, i.item_name, i.quantity, i.created_at, i.status, i.user_id, u.username"
-        sql += f" ORDER BY i.created_at {sorted} NULLS LAST LIMIT 6"
+        sql += f" ORDER BY i.created_at {sorted}"
+        if not is_all:
+            sql += f" NULLS LAST LIMIT 6"
 
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
@@ -132,9 +135,8 @@ class ItemRepository:
         INSERT INTO rental_records
         (user_id, item_id, rental_start, rental_end, actual_return, rental_status, pickup_image, return_image, created_at)
         VALUES (%s, %s, %s, %s, null, 1, null, null, NOW());
-        UPDATE items SET status = 1 where item_id = %s
         """
-        params = [user_id, item_id, rental_start, rental_end, item_id]
+        params = [user_id, item_id, rental_start, rental_end]
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
 
@@ -186,38 +188,25 @@ class ItemRepository:
         return [dict(zip(col_names, row)) for row in rows]
     
     
-    def pickup_item(self, user_id: int, item_id: int, pickup_time: str, image: str) -> dict | None:
-        find_sql = """
-        SELECT rental_start, rental_end
-        FROM reservations
-        WHERE user_id = %s
-          AND item_id = %s
-          AND status = 1
-        ORDER BY created_at DESC
-        LIMIT 1
+    def pickup_item(self, user_id: int, item_id: int, pickup_time: str, pickup_image: str) -> dict | None:
+        sql = """
+        update rental_records 
+        set rental_status = 2, 
+        pickup_image = %s,
+        pickup_time = %s
+        where item_id = %s
+        and rental_status = 1
+        and user_id = %s
+        RETURNING rental_id;
+        UPDATE items SET status = 2 where item_id = %s
         """
         with connection.cursor() as cursor:
-            cursor.execute(find_sql, [user_id, item_id])
-            row = cursor.fetchone()
-        if not row:
-            return None 
-        
-        rental_start, rental_end = row 
-
-        insert_sql = """
-        INSERT INTO rental_records
-        (user_id, item_id, rental_start, rental_end, rental_status, pickup_image, created_at)
-        VALUES (%s, %s, %s, %s, '2', %s, NOW())
-        RETURNING rental_id
-        """
-        params = [user_id, item_id, pickup_time, rental_end, image]
-        with connection.cursor() as cursor:
-            cursor.execute(insert_sql, params)
+            cursor.execute(sql, [pickup_image, pickup_time, item_id, user_id, item_id])
         return {
             "user_id": user_id,
             "item_id": item_id,
             "rental_start": pickup_time, 
-            "rental_end": str(rental_end), 
+            "rental_end": str(pickup_image), 
         }
     
 
@@ -241,7 +230,7 @@ class ItemRepository:
         JOIN groups g ON i.group_id = g.group_id
         LEFT JOIN item_images im ON im.item_id = i.item_id
         WHERE r.user_id = %s
-          AND r.rental_status = '2'
+        AND r.rental_status = '2'
         GROUP BY r.user_id, i.group_id, g.group_name, i.item_id, i.item_name, i.item_description, i.status, i.quantity, i.caution, r.rental_start, r.rental_end
         ORDER BY r.created_at DESC
         """
@@ -256,39 +245,24 @@ class ItemRepository:
         return result
     
     def return_item(self, user_id: int, item_id: int, return_time: str, return_image: str) -> dict | None:
-        find_sql = """
-        SELECT rental_id, rental_start, rental_end
-        FROM rental_records
-        WHERE user_id = %s
-          AND item_id = %s
-          AND rental_status = 'ON_RENT' -- 삭제하는 로직으로 대체
-        ORDER BY created_at DESC
-        LIMIT 1;
+        sql = """
+        update rental_records 
+        set rental_status = 3, 
+        return_image = %s,
+        return_time = %s
+        where item_id = %s
+        and rental_status = 2
+        and user_id = %s
+        RETURNING rental_id;
         UPDATE items SET status = 0 where item_id = %s
         """
         with connection.cursor() as cursor:
-            cursor.execute(find_sql, [user_id, item_id, item_id])
-            row = cursor.fetchone()
-        if not row:
-            return None 
-
-        rental_id, rental_start, rental_end = row
-
-        update_sql = """
-        UPDATE rental_records
-        SET actual_return = %s,
-            return_image  = %s,
-            rental_status = 0
-        WHERE rental_id = %s
-        """
-        with connection.cursor() as cursor:
-            cursor.execute(update_sql, [return_time, return_image, rental_id])
-
+            cursor.execute(sql, [return_image, return_time, item_id, user_id, item_id])
         return {
             "user_id": user_id,
             "item_id": item_id,
-            "rental_start": str(rental_start),
-            "rental_end": str(rental_end),
+            "rental_start": return_time, 
+            "rental_end": str(return_image), 
         }
     
 class WishlistRepository:
