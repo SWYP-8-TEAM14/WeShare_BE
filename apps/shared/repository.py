@@ -182,6 +182,7 @@ class ItemRepository:
         LEFT JOIN item_images im ON im.item_id = i.item_id
         LEFT JOIN users u ON i.user_id = u.id
         WHERE r.user_id = %s
+        AND r.rental_status < 3
         """
 
         params = [user_id, user_id]
@@ -208,8 +209,7 @@ class ItemRepository:
         pickup_time = %s
         where item_id = %s
         and rental_status = 1
-        and user_id = %s
-        RETURNING rental_id;
+        and user_id = %s;
         UPDATE items SET status = 2 where item_id = %s
         """
         with connection.cursor() as cursor:
@@ -264,8 +264,7 @@ class ItemRepository:
         return_time = %s
         where item_id = %s
         and rental_status = 2
-        and user_id = %s
-        RETURNING rental_id;
+        and user_id = %s;
         UPDATE items SET status = 0 where item_id = %s
         """
         with connection.cursor() as cursor:

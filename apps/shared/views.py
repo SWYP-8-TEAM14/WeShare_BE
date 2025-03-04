@@ -12,7 +12,6 @@ from .repository import ItemRepository, WishlistRepository
 from .serializers import (
     ItemAddSwaggerSerializer,
     ItemListSwaggerSerializer,
-    ItemDetailSwaggerSerializer,
     CommonResponseSerializer,
     ItemListRequestSerializer,
     ItemDetailRequestSerializer,

@@ -118,27 +118,12 @@ class RentalHistorySerializer(serializers.Serializer):
     username = serializers.CharField()
     profile_image = serializers.CharField(allow_blank=True)
 
-class ItemDetailSwaggerSerializer(serializers.Serializer):
-    """ItemView - 물품 상세 조회 조회 결과 예시"""
-    group_id = serializers.IntegerField()
-    group_name = serializers.CharField()
-    item_id = serializers.IntegerField()
-    item_name = serializers.CharField()
-    item_image = serializers.CharField(allow_blank=True)
-    quantity = serializers.IntegerField()
-    created_at = serializers.DateTimeField(allow_null=True)
-    is_wishlist = serializers.IntegerField()
-    status = serializers.IntegerField()
-    user_id = serializers.IntegerField(allow_null=True)
-    user_name = serializers.CharField(allow_null=True)
-    rental_history = RentalHistorySerializer(many=True, required=False)  # rental_history 추가
-
 class CommonResponseSerializer(serializers.Serializer):
     """모든 응답의 공통 구조 {Result, Message, data}"""
     Result = serializers.IntegerField()
     Message = serializers.CharField()
     data = serializers.CharField()
-    
+
 
 class ItemDetailDataSerializer(serializers.Serializer):
     """물품 상세 정보의 구조"""
@@ -156,10 +141,11 @@ class ItemDetailDataSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(help_text="수량")
     caution = serializers.CharField(help_text="주의사항", allow_blank=True)
     created_at = serializers.DateTimeField(help_text="등록일")
+    rental_history = RentalHistorySerializer(many=True, required=False)  # rental_history 추가
 
 class ItemDetailResponseSerializer(CommonResponseSerializer):
     """공통 응답 구조 + 물품 상세 조회 `data` 필드의 구체적인 구조"""
-    data = ItemDetailSwaggerSerializer(help_text="물품 상세 정보")
+    data = ItemDetailDataSerializer(help_text="물품 상세 정보")
 
 class ItemListDataSerializer(serializers.Serializer):
     """물품 리스트의 단일 아이템 데이터 구조"""
