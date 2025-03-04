@@ -73,7 +73,7 @@ class ItemRepository:
         JOIN groups_group g ON i.group_id = g.group_id
         JOIN groups_groupmember gm ON i.group_id = gm.group_id
         LEFT JOIN item_images im ON im.item_id = i.item_id
-        LEFT JOIN auth_user u ON i.user_id = u.id
+        LEFT JOIN users u ON i.user_id = u.id
         WHERE gm.user_id = %s
         """
 
@@ -113,7 +113,7 @@ class ItemRepository:
         FROM items i
         JOIN groups_group g ON i.group_id = g.group_id
         LEFT JOIN item_images im ON im.item_id = i.item_id
-		JOIN auth_user u ON i.user_id = u.id
+		JOIN users u ON i.user_id = u.id
         WHERE i.item_id = %s
         GROUP BY i.user_id, u.username, i.group_id, g.group_name, i.item_id, i.item_name, i.pickup_place, 
             i.return_place, i.item_description, i.status, i.quantity, i.caution, i.created_at
@@ -165,7 +165,7 @@ class ItemRepository:
         JOIN items i ON r.item_id = i.item_id
         JOIN groups_group g ON i.group_id = g.group_id
         LEFT JOIN item_images im ON im.item_id = i.item_id
-        LEFT JOIN auth_user u ON i.user_id = u.id
+        LEFT JOIN users u ON i.user_id = u.id
         WHERE r.user_id = %s
         """
 
