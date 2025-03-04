@@ -100,23 +100,35 @@ class ItemRepository:
         sql = """
         SELECT
             i.user_id,
-			u.username,
+            u.username,
             i.group_id,
             g.group_name,
             i.item_id,
             i.item_name,
-			i.pickup_place,
-			i.return_place,
+            i.pickup_place,
+            i.return_place,
             i.item_description,
             COALESCE(ARRAY_AGG(im.image_url) FILTER (WHERE im.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls,
             i.status,
             i.quantity,
             i.caution,
-            i.created_at
+            i.created_at,
+            COALESCE(
+                JSONB_AGG(
+                    JSONB_BUILD_OBJECT(
+                        'rental_start', r.rental_start,
+                        'rental_end', r.rental_end,
+                        'username', u.username,
+                        'profile_image', u.profile_image
+                    ) ORDER BY r.rental_start
+                ) FILTER (WHERE r.rental_status = 3),
+                '[]'::JSONB
+            ) AS rental_history
         FROM items i
         JOIN groups_group g ON i.group_id = g.group_id
         LEFT JOIN item_images im ON im.item_id = i.item_id
-		JOIN users u ON i.user_id = u.id
+        JOIN users u ON i.user_id = u.id
+        LEFT JOIN rental_records r ON i.item_id = r.item_id
         WHERE i.item_id = %s
         GROUP BY i.user_id, u.username, i.group_id, g.group_name, i.item_id, i.item_name, i.pickup_place, 
             i.return_place, i.item_description, i.status, i.quantity, i.caution, i.created_at
