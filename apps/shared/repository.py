@@ -52,6 +52,8 @@ class ItemRepository:
         if sorted.upper() not in ("ASC", "DESC"):
             raise ValueError("Invalid sort order. Use 'ASC' or 'DESC'")
         
+        now = datetime.now()
+        
         sql = f"""
         SELECT
             i.group_id,
@@ -61,7 +63,20 @@ class ItemRepository:
             COALESCE(ARRAY_AGG(im.image_url) FILTER (WHERE im.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls,
             i.quantity,
             i.created_at,
-            i.status,  
+            COALESCE(
+                MAX(
+                    CASE 
+                        WHEN rr.rental_start <= %s 
+                        AND rr.rental_end >= %s
+                        AND rr.rental_status != 3 THEN 
+                            CASE 
+                                WHEN rr.rental_status = 2 THEN 2  -- 픽업 완료, 반납 가능 상태
+                                ELSE 1  -- 예약 완료, 픽업 가능 상태
+                            END
+                        ELSE 0 -- 예약 가능 상태
+                    END
+                ), 0
+            ) AS status,
             CASE 
                 WHEN EXISTS (
                     SELECT 1 FROM wishlists w WHERE w.user_id = %s AND w.item_id = i.item_id
@@ -74,17 +89,23 @@ class ItemRepository:
         JOIN groups_group g ON i.group_id = g.group_id
         JOIN groups_groupmember gm ON i.group_id = gm.group_id
         LEFT JOIN item_images im ON im.item_id = i.item_id
-        LEFT JOIN users u ON i.user_id = u.id
+        LEFT JOIN auth_user u ON i.user_id = u.id
+        LEFT JOIN rental_records rr 
+            ON i.item_id = rr.item_id 
+            AND rr.rental_end >= %s  -- 현재보다 미래의 예약만 고려
+            AND rr.rental_status != 3 -- rental_status = 3인 것은 무시
         WHERE gm.user_id = %s
         """
 
-        params = [user_id, user_id]
+        params = [now, now, user_id, now, user_id]
+        
         if group_id != 0:
             sql += " AND i.group_id = %s"
             params.append(group_id)
 
-        sql += f" GROUP BY i.item_id, i.group_id, g.group_name, i.item_name, i.quantity, i.created_at, i.status, i.user_id, u.username"
+        sql += f" GROUP BY i.item_id, i.group_id, g.group_name, i.item_name, i.quantity, i.created_at, i.user_id, u.username"
         sql += f" ORDER BY i.created_at {sorted}"
+        
         if not is_all:
             sql += f" NULLS LAST LIMIT 6"
 
@@ -310,7 +331,7 @@ class ItemRepository:
             i.item_name,
             i.item_description,
             COALESCE(ARRAY_AGG(im.image_url) FILTER (WHERE im.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls,
-            i.status AS item_status,   -- items 테이블의 status
+            i.status
             i.quantity,
             i.caution,
             r.rental_start,

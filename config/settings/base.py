@@ -31,6 +31,7 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "apps.shared",
+    "sslserver",
 ]
 
 THIRD_PARTY = [
