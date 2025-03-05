@@ -28,6 +28,10 @@ from .serializers import (
     ItemReturnResponseSerializer,
     WishlistToggleResponseSerializer,
     ItemPickupRequestSerializer,
+    ItemAvailableTimeRequestSerializer,
+    ItemAvailableTimeResponseSerializer,
+    ItemAvailableTimeRangeRequestSerializer,
+    ItemAvailableTimeRangeResponseSerializer,
 )
 
 
@@ -251,7 +255,77 @@ class ItemDetailView(APIView):
             "Message": "",
             "data": json.dumps(detail_data, default=str)
         }, status=200)
+    
 
+class ItemAvailableTimeView(APIView):
+    """
+    POST /api/v1/shared/items/available-time/
+    """
+    permission_classes = [AllowAny]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
+
+    @extend_schema(
+        summary="예약 가능한 시간 조회",
+        description="특정 item_id에 대한 예약 가능한 시간 범위를 조회합니다.",
+        request=ItemAvailableTimeRequestSerializer,
+        responses={
+            200: OpenApiResponse(response=ItemAvailableTimeResponseSerializer, description="조회 성공 (Result=1)"),
+            400: OpenApiResponse(response=CommonResponseSerializer, description="조회 실패 (Result=0)")
+        }
+    )
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        item_id = request.data.get("item_id")
+
+        if not user_id and user_id != 0:
+            return Response({"Result": 0, "Message": "user_id가 필요합니다.", "data": ""}, status=400)
+        if not item_id and item_id != 0:
+            return Response({"Result": 0, "Message": "item_id가 필요합니다.", "data": ""}, status=400)
+
+        try:
+            available_times = self.repository.get_available_times(int(item_id))
+        except Exception as e:
+            return Response({"Result": 0, "Message": str(e), "data": ""}, status=400)
+
+        return Response({"Result": 1, "Message": "", "data": available_times}, status=200)
+
+class ItemAvailableTimeRangeView(APIView):
+    """
+    POST /api/v1/shared/items/available-time-range/
+    """
+    permission_classes = [AllowAny]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
+
+    @extend_schema(
+        summary="예약 가능한 시간 범위 조회",
+        description="특정 item_id에 대한 예약 가능한 시간 범위를 조회합니다.",
+        request=ItemAvailableTimeRangeRequestSerializer,
+        responses={
+            200: OpenApiResponse(response=ItemAvailableTimeRangeResponseSerializer, description="조회 성공 (Result=1)"),
+            400: OpenApiResponse(response=CommonResponseSerializer, description="조회 실패 (Result=0)")
+        }
+    )
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        item_id = request.data.get("item_id")
+
+        if not user_id and user_id != 0:
+            return Response({"Result": 0, "Message": "user_id가 필요합니다.", "data": ""}, status=400)
+        if not item_id and item_id != 0:
+            return Response({"Result": 0, "Message": "item_id가 필요합니다.", "data": ""}, status=400)
+
+        try:
+            available_ranges = self.repository.get_available_time_ranges(int(item_id))
+        except Exception as e:
+            return Response({"Result": 0, "Message": str(e), "data": ""}, status=400)
+
+        return Response({"Result": 1, "Message": "", "data": available_ranges}, status=200)
 
 class ItemReserveView(APIView):
     """

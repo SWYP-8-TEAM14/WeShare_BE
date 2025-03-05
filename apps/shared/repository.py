@@ -1,5 +1,5 @@
 from django.db import connection
-
+from datetime import datetime, timedelta
 
 class ItemRepository:
 
@@ -141,7 +141,85 @@ class ItemRepository:
             col_names = [desc[0] for desc in cursor.description]
 
         return dict(zip(col_names, row))
-    
+
+    def get_available_times(self, item_id: int) -> list:
+        now = datetime.now().replace(second=0, microsecond=0)
+        if now.minute % 30 != 0:
+            now += timedelta(minutes=30 - now.minute % 30)
+            
+        end_time = now + timedelta(days=7)
+        time_slots = []
+        
+        temp_time = now
+        while temp_time <= end_time:
+            time_slots.append(temp_time.strftime("%Y-%m-%d %H:%M"))
+            temp_time += timedelta(minutes=30)
+
+        sql = """
+        SELECT rental_start, rental_end
+        FROM rental_records
+        WHERE item_id = %s
+        AND rental_status != 3
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [item_id])
+            reserved_times = cursor.fetchall()
+
+        for rental_start, rental_end in reserved_times:
+            rental_start = rental_start.strftime("%Y-%m-%d %H:%M")
+            rental_end = rental_end.strftime("%Y-%m-%d %H:%M")
+            time_slots = [t for t in time_slots if not (rental_start <= t < rental_end)]
+
+        return time_slots
+
+    def get_available_time_ranges(self, item_id: int) -> list:
+        now = datetime.now().replace(second=0, microsecond=0)
+        if now.minute % 30 != 0:
+            now += timedelta(minutes=30 - now.minute % 30)
+
+        end_time = now + timedelta(days=7)
+
+        time_slots = []
+        temp_time = now
+        while temp_time <= end_time:
+            time_slots.append(temp_time)
+            temp_time += timedelta(minutes=30)
+
+        sql = """
+        SELECT rental_start, rental_end
+        FROM rental_records
+        WHERE item_id = %s
+        AND rental_status != 3
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [item_id])
+            reserved_times = cursor.fetchall()
+
+        for rental_start, rental_end in reserved_times:
+            rental_start = rental_start.replace(second=0, microsecond=0)
+            rental_end = rental_end.replace(second=0, microsecond=0)
+            time_slots = [t for t in time_slots if not (rental_start <= t < rental_end)]
+
+        available_ranges = []
+        if not time_slots:
+            return available_ranges
+
+        start_time = time_slots[0]
+        for i in range(1, len(time_slots)):
+            if (time_slots[i] - time_slots[i - 1]) != timedelta(minutes=30):
+                available_ranges.append({
+                    "start": start_time.strftime("%Y-%m-%d %H:%M"),
+                    "end": time_slots[i - 1].strftime("%Y-%m-%d %H:%M")
+                })
+                start_time = time_slots[i]
+
+        available_ranges.append({
+            "start": start_time.strftime("%Y-%m-%d %H:%M"),
+            "end": time_slots[-1].strftime("%Y-%m-%d %H:%M")
+        })
+
+        return available_ranges
+
     def reserve_item(self, user_id: int, item_id: int, rental_start: str, rental_end: str):
         sql = """
         INSERT INTO rental_records

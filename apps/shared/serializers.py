@@ -124,6 +124,28 @@ class CommonResponseSerializer(serializers.Serializer):
     Message = serializers.CharField()
     data = serializers.CharField()
 
+class ItemAvailableTimeRequestSerializer(serializers.Serializer):
+    """예약 가능한 시간 조회 요청"""
+    user_id = serializers.IntegerField(help_text="유저 ID")
+    item_id = serializers.IntegerField(help_text="아이템 ID")
+
+class ItemAvailableTimeResponseSerializer(CommonResponseSerializer):
+    """예약 가능한 시간 조회 응답"""
+    data = serializers.ListField(child=serializers.CharField(), help_text="예약 가능한 시간 리스트 (30분 단위)")
+
+class ItemAvailableTimeRangeRequestSerializer(serializers.Serializer):
+    """예약 가능한 시간 범위 조회 요청"""
+    user_id = serializers.IntegerField(help_text="유저 ID")
+    item_id = serializers.IntegerField(help_text="아이템 ID")
+
+class ItemAvailableTimeDataSerializer(serializers.Serializer):
+    """예약 가능한 시간 범위 데이터 구조"""
+    start = serializers.CharField(help_text="예약 가능 시작 시간 (YYYY-MM-DD HH:MM)")
+    end = serializers.CharField(help_text="예약 가능 종료 시간 (YYYY-MM-DD HH:MM)")
+
+class ItemAvailableTimeRangeResponseSerializer(CommonResponseSerializer):
+    """공통 응답 구조 + 예약 가능한 시간 범위 조회 `data` 필드의 구조"""
+    data = serializers.ListField(child=ItemAvailableTimeDataSerializer(), help_text="예약 가능한 시간 범위 리스트")
 
 class ItemDetailDataSerializer(serializers.Serializer):
     """물품 상세 정보의 구조"""
