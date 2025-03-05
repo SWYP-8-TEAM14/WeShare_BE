@@ -17,7 +17,7 @@ class UserView(APIView):
     def get(self, request: Request) -> Response:
         try:
             # 현재 로그인한 사용자 정보 조회
-            user = User.objects.get(id=request.user.id)
+            user = request.user
             # 사용자 정보를 JSON으로 직렬화
             serializer = UserUpdateSerializer(user)
             # 직렬화된 데이터 반환
