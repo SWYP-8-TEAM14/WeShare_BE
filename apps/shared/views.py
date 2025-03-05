@@ -12,14 +12,26 @@ from .repository import ItemRepository, WishlistRepository
 from .serializers import (
     ItemAddSwaggerSerializer,
     ItemListSwaggerSerializer,
-    ItemDetailSwaggerSerializer,
     CommonResponseSerializer,
     ItemListRequestSerializer,
     ItemDetailRequestSerializer,
     ItemDeleteRequestSerializer,
     ItemUserListRequestSerializer,
     ItemReserveRequestSerializer,
-    WishListToggleRequestSerializer
+    WishListToggleRequestSerializer,
+    ItemDetailResponseSerializer,
+    ItemListResponseSerializer,
+    ItemReserveResponseSerializer,
+    ItemReserveListResponseSerializer,
+    ItemPickupResponseSerializer,
+    ItemReturnableListResponseSerializer,
+    ItemReturnResponseSerializer,
+    WishlistToggleResponseSerializer,
+    ItemPickupRequestSerializer,
+    ItemAvailableTimeRequestSerializer,
+    ItemAvailableTimeResponseSerializer,
+    ItemAvailableTimeRangeRequestSerializer,
+    ItemAvailableTimeRangeResponseSerializer,
 )
 
 
@@ -43,7 +55,6 @@ class ItemAddView(APIView):
                 description="등록 성공 (Result=1)"
             ),
             400: OpenApiResponse(
-                response=CommonResponseSerializer,
                 description="등록 실패 (Result=0)"
             )
         },
@@ -118,11 +129,11 @@ class ItemDeleteView(APIView):
         }
     )
     def post(self, request):
-        item_id = request.data.get("item_id")
-        if not item_id and item_id != 0:
+        item_ids = request.data.get("item_id")
+        if len(item_ids) == 0:
             return Response({"Result":0,"Message":"item_id가 필요합니다.","data":""}, status=400)
 
-        deleted_count = self.repository.delete_item(int(item_id))
+        deleted_count = self.repository.delete_item(list(item_ids))
         if deleted_count > 0:
             return Response({"Result":1,"Message":"","data":""}, status=200)
         else:
@@ -145,11 +156,10 @@ class ItemView(APIView):
         request=ItemListRequestSerializer,
         responses={
             200: OpenApiResponse(
-                response=CommonResponseSerializer,
+                response=ItemListResponseSerializer,
                 description="조회 성공 (Result=1)"
             ),
             400: OpenApiResponse(
-                response=CommonResponseSerializer,
                 description="조회 실패 (Result=0)"
             )
         },
@@ -158,6 +168,7 @@ class ItemView(APIView):
         user_id = request.data.get("user_id")
         group_id = request.data.get("group_id")
         sort = request.data.get("sort")
+        is_all = request.data.get("is_all")
         if not user_id and user_id != 0:
             return Response({
                 "Result": 0,
@@ -179,12 +190,12 @@ class ItemView(APIView):
                 "data": ""
             }, status=400)
         
-        sorted = "ASC"
+        sorted = "DESC"
         if sort == 2:
-            sorted = "DESC"
-
+            sorted = "ASC"
+        
         try:
-            result_list = self.repository.get_item_list(int(group_id), int(user_id), sorted)
+            result_list = self.repository.get_item_list(int(group_id), int(user_id), sorted, is_all)
         except Exception as e:
             return Response({"Result": 0, "Message": str(e), "data": ""}, status=400)
 
@@ -211,15 +222,13 @@ class ItemDetailView(APIView):
         request=ItemDetailRequestSerializer,
         responses={
             200: OpenApiResponse(
-                response=CommonResponseSerializer,
+                response=ItemDetailResponseSerializer,
                 description="조회 성공 (Result=1)"
             ),
             400: OpenApiResponse(
-                response=CommonResponseSerializer,
                 description="조회 실패 (Result=0)"
             ),
             404: OpenApiResponse(
-                response=CommonResponseSerializer,
                 description="데이터 없음"
             )
         },
@@ -246,7 +255,77 @@ class ItemDetailView(APIView):
             "Message": "",
             "data": json.dumps(detail_data, default=str)
         }, status=200)
+    
 
+class ItemAvailableTimeView(APIView):
+    """
+    POST /api/v1/shared/items/available-time/
+    """
+    permission_classes = [AllowAny]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
+
+    @extend_schema(
+        summary="예약 가능한 시간 조회",
+        description="특정 item_id에 대한 예약 가능한 시간 범위를 조회합니다.",
+        request=ItemAvailableTimeRequestSerializer,
+        responses={
+            200: OpenApiResponse(response=ItemAvailableTimeResponseSerializer, description="조회 성공 (Result=1)"),
+            400: OpenApiResponse(response=CommonResponseSerializer, description="조회 실패 (Result=0)")
+        }
+    )
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        item_id = request.data.get("item_id")
+
+        if not user_id and user_id != 0:
+            return Response({"Result": 0, "Message": "user_id가 필요합니다.", "data": ""}, status=400)
+        if not item_id and item_id != 0:
+            return Response({"Result": 0, "Message": "item_id가 필요합니다.", "data": ""}, status=400)
+
+        try:
+            available_times = self.repository.get_available_times(int(item_id))
+        except Exception as e:
+            return Response({"Result": 0, "Message": str(e), "data": ""}, status=400)
+
+        return Response({"Result": 1, "Message": "", "data": available_times}, status=200)
+
+class ItemAvailableTimeRangeView(APIView):
+    """
+    POST /api/v1/shared/items/available-time-range/
+    """
+    permission_classes = [AllowAny]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repository = ItemRepository()
+
+    @extend_schema(
+        summary="예약 가능한 시간 범위 조회",
+        description="특정 item_id에 대한 예약 가능한 시간 범위를 조회합니다.",
+        request=ItemAvailableTimeRangeRequestSerializer,
+        responses={
+            200: OpenApiResponse(response=ItemAvailableTimeRangeResponseSerializer, description="조회 성공 (Result=1)"),
+            400: OpenApiResponse(response=CommonResponseSerializer, description="조회 실패 (Result=0)")
+        }
+    )
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        item_id = request.data.get("item_id")
+
+        if not user_id and user_id != 0:
+            return Response({"Result": 0, "Message": "user_id가 필요합니다.", "data": ""}, status=400)
+        if not item_id and item_id != 0:
+            return Response({"Result": 0, "Message": "item_id가 필요합니다.", "data": ""}, status=400)
+
+        try:
+            available_ranges = self.repository.get_available_time_ranges(int(item_id))
+        except Exception as e:
+            return Response({"Result": 0, "Message": str(e), "data": ""}, status=400)
+
+        return Response({"Result": 1, "Message": "", "data": available_ranges}, status=200)
 
 class ItemReserveView(APIView):
     """
@@ -262,7 +341,7 @@ class ItemReserveView(APIView):
         description="물품 예약을 진행합니다. 물품 상태: (기본=0, 예약중=1, 픽업중=2)",
         request=ItemReserveRequestSerializer,
         responses={
-            200: OpenApiResponse(description="예약 성공 (Result=1)"),
+            200: OpenApiResponse(response=ItemReserveResponseSerializer, description="예약 성공 (Result=1)"),
             400: OpenApiResponse(description="에러 (Result=0)")
         }
     )
@@ -300,7 +379,7 @@ class ItemReserveListView(APIView):
         description="특정 user 가 예약한 물품 목록을 조회합니다.",
         request=ItemUserListRequestSerializer,
         responses={
-            200: OpenApiResponse(description="조회 성공 (Result=1)"),
+            200: OpenApiResponse(response=ItemReserveListResponseSerializer, description="조회 성공 (Result=1)"),
             400: OpenApiResponse(description="오류 (Result=0)")
         }
     )
@@ -329,9 +408,9 @@ class ItemReserveListView(APIView):
                 "data": ""
             }, status=400)
         
-        sorted = "ASC"
+        sorted = "DESC"
         if sort == 2:
-            sorted = "DESC"
+            sorted = "ASC"
 
         try:
             rows = self.repository.get_reserved_items(int(group_id), int(user_id), sorted)
@@ -352,9 +431,9 @@ class ItemPickupView(APIView):
     @extend_schema(
         summary="픽업 인증",
         description="사용자가 예약한 물품을 실제로 픽업합니다.",
-        request=None,
+        request=ItemPickupRequestSerializer,
         responses={
-            200: OpenApiResponse(description="픽업 성공"),
+            200: OpenApiResponse(response=ItemPickupResponseSerializer, description="픽업 성공"),
             400: OpenApiResponse(description="에러"),
             404: OpenApiResponse(description="예약 내역 없음")
         }
@@ -363,7 +442,6 @@ class ItemPickupView(APIView):
         user_id = request.data.get("user_id")
         item_id = request.data.get("item_id")
         pickup_time = request.data.get("pickup_time")
-        image = request.data.get("image","")
 
         if not user_id and user_id != 0:
             return Response({"Result":0,"Message":"(user_id, item_id, pickup_time)는 필수입니다.","data":""}, status=400)
@@ -373,7 +451,13 @@ class ItemPickupView(APIView):
             return Response({"Result":0,"Message":"(user_id, item_id, pickup_time)는 필수입니다.","data":""}, status=400)
 
         try:
-            result = self.repository.pickup_item(int(user_id), int(item_id), pickup_time, image)
+            pickup_image = request.FILES.getlist("pickup_image")
+            image_urls = []
+            for image in pickup_image[:4]:
+                image_url = upload_to_ncp_storage(image)
+                image_urls.append(image_url)
+
+            result = self.repository.pickup_item(int(user_id), int(item_id), pickup_time, image_urls)
         except Exception as e:
             return Response({"Result":0,"Message":str(e),"data":""}, status=400)
 
@@ -401,7 +485,7 @@ class ItemReturnableListView(APIView):
         description="현재 대여중(rental_status='ON_RENT')인 물품 목록 조회",
         request=None,
         responses={
-            200: OpenApiResponse(description="조회 성공 (Result=1)"),
+            200: OpenApiResponse(response=ItemReturnableListResponseSerializer, description="조회 성공 (Result=1)"),
             400: OpenApiResponse(description="오류 (Result=0)")
         }
     )
@@ -436,7 +520,7 @@ class ItemReturnView(APIView):
         description="대여중인 물품을 반납 처리 (rental_records 업데이트)",
         request=None,
         responses={
-            200: OpenApiResponse(description="반납 완료 (Result=1)"),
+            200: OpenApiResponse(response=ItemReturnResponseSerializer, description="반납 완료 (Result=1)"),
             400: OpenApiResponse(description="오류 (Result=0)"),
             404: OpenApiResponse(description="반납할 내역 없음")
         }
@@ -445,7 +529,6 @@ class ItemReturnView(APIView):
         user_id = request.data.get("user_id")
         item_id = request.data.get("item_id")
         return_time = request.data.get("return_time")
-        return_image = request.data.get("return_image","")
 
         if not user_id and user_id != 0:
             return Response({"Result":0,"Message":"필수필드(user_id, item_id, return_time) 누락","data":""}, status=400)
@@ -455,7 +538,12 @@ class ItemReturnView(APIView):
             return Response({"Result":0,"Message":"필수필드(user_id, item_id, return_time) 누락","data":""}, status=400)
 
         try:
-            result = self.repository.return_item(int(user_id), int(item_id), return_time, return_image)
+            return_image = request.FILES.getlist("return_image")
+            image_urls = []
+            for image in return_image[:4]:
+                image_url = upload_to_ncp_storage(image)
+                image_urls.append(image_url)
+            result = self.repository.return_item(int(user_id), int(item_id), return_time, image_urls)
         except Exception as e:
             return Response({"Result":0,"Message":str(e),"data":""}, status=400)
 
@@ -485,11 +573,10 @@ class WishlistToggleView(APIView):
         request=WishListToggleRequestSerializer,
         responses={
             201: OpenApiResponse(
-                response=CommonResponseSerializer,
+                response=WishlistToggleResponseSerializer,
                 description="등록 성공 (Result=1)"
             ),
             400: OpenApiResponse(
-                response=CommonResponseSerializer,
                 description="등록 실패 (Result=0)"
             )
         },

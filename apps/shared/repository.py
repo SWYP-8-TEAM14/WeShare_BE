@@ -1,5 +1,5 @@
 from django.db import connection
-
+from datetime import datetime, timedelta
 
 class ItemRepository:
 
@@ -7,7 +7,7 @@ class ItemRepository:
         insert_sql = """
         INSERT INTO items
         (user_id, group_id, item_name, pickup_place, return_place, item_description, status,
-         quantity, caution, created_at)
+        quantity, caution, created_at)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
         RETURNING item_id
         """
@@ -40,16 +40,19 @@ class ItemRepository:
         with connection.cursor() as cursor:
             cursor.execute(insert_sql, [item_id, image_url])
 
-    def delete_item(self, item_id: int) -> int:
-        sql = "DELETE FROM items WHERE item_id = %s"
+    def delete_item(self, item_ids: list) -> int:
+        placeholders = ', '.join(['%s'] * len(item_ids))
+        sql = f"DELETE FROM items WHERE item_id IN ({placeholders})"
         with connection.cursor() as cursor:
-            cursor.execute(sql, [item_id])
+            cursor.execute(sql, item_ids)
             deleted_count = cursor.rowcount 
         return deleted_count
 
-    def get_item_list(self, group_id: int, user_id: int, sorted: str) -> list[dict]:
+    def get_item_list(self, group_id: int, user_id: int, sorted: str, is_all: bool) -> list[dict]:
         if sorted.upper() not in ("ASC", "DESC"):
             raise ValueError("Invalid sort order. Use 'ASC' or 'DESC'")
+        
+        now = datetime.now()
         
         sql = f"""
         SELECT
@@ -60,7 +63,20 @@ class ItemRepository:
             COALESCE(ARRAY_AGG(im.image_url) FILTER (WHERE im.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls,
             i.quantity,
             i.created_at,
-            i.status,  
+            COALESCE(
+                MAX(
+                    CASE 
+                        WHEN rr.rental_start <= %s 
+                        AND rr.rental_end >= %s
+                        AND rr.rental_status != 3 THEN 
+                            CASE 
+                                WHEN rr.rental_status = 2 THEN 2  -- 픽업 완료, 반납 가능 상태
+                                ELSE 1  -- 예약 완료, 픽업 가능 상태
+                            END
+                        ELSE 0 -- 예약 가능 상태
+                    END
+                ), 0
+            ) AS status,
             CASE 
                 WHEN EXISTS (
                     SELECT 1 FROM wishlists w WHERE w.user_id = %s AND w.item_id = i.item_id
@@ -73,17 +89,25 @@ class ItemRepository:
         JOIN groups_group g ON i.group_id = g.group_id
         JOIN groups_groupmember gm ON i.group_id = gm.group_id
         LEFT JOIN item_images im ON im.item_id = i.item_id
-        LEFT JOIN users u ON i.user_id = u.id
+        LEFT JOIN auth_user u ON i.user_id = u.id
+        LEFT JOIN rental_records rr 
+            ON i.item_id = rr.item_id 
+            AND rr.rental_end >= %s  -- 현재보다 미래의 예약만 고려
+            AND rr.rental_status != 3 -- rental_status = 3인 것은 무시
         WHERE gm.user_id = %s
         """
 
-        params = [user_id, user_id]
+        params = [now, now, user_id, now, user_id]
+        
         if group_id != 0:
             sql += " AND i.group_id = %s"
             params.append(group_id)
 
-        sql += f" GROUP BY i.item_id, i.group_id, g.group_name, i.item_name, i.quantity, i.created_at, i.status, i.user_id, u.username"
-        sql += f" ORDER BY i.created_at {sorted} NULLS LAST LIMIT 6"
+        sql += f" GROUP BY i.item_id, i.group_id, g.group_name, i.item_name, i.quantity, i.created_at, i.user_id, u.username"
+        sql += f" ORDER BY i.created_at {sorted}"
+        
+        if not is_all:
+            sql += f" NULLS LAST LIMIT 6"
 
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
@@ -97,23 +121,35 @@ class ItemRepository:
         sql = """
         SELECT
             i.user_id,
-			u.username,
+            u.username,
             i.group_id,
             g.group_name,
             i.item_id,
             i.item_name,
-			i.pickup_place,
-			i.return_place,
+            i.pickup_place,
+            i.return_place,
             i.item_description,
             COALESCE(ARRAY_AGG(im.image_url) FILTER (WHERE im.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls,
             i.status,
             i.quantity,
             i.caution,
-            i.created_at
+            i.created_at,
+            COALESCE(
+                JSONB_AGG(
+                    JSONB_BUILD_OBJECT(
+                        'rental_start', r.rental_start,
+                        'rental_end', r.rental_end,
+                        'username', u.username,
+                        'profile_image', u.profile_image
+                    ) ORDER BY r.rental_start
+                ) FILTER (WHERE r.rental_status = 3),
+                '[]'::JSONB
+            ) AS rental_history
         FROM items i
         JOIN groups_group g ON i.group_id = g.group_id
         LEFT JOIN item_images im ON im.item_id = i.item_id
-		JOIN users u ON i.user_id = u.id
+        JOIN users u ON i.user_id = u.id
+        LEFT JOIN rental_records r ON i.item_id = r.item_id
         WHERE i.item_id = %s
         GROUP BY i.user_id, u.username, i.group_id, g.group_name, i.item_id, i.item_name, i.pickup_place, 
             i.return_place, i.item_description, i.status, i.quantity, i.caution, i.created_at
@@ -126,12 +162,90 @@ class ItemRepository:
             col_names = [desc[0] for desc in cursor.description]
 
         return dict(zip(col_names, row))
-    
+
+    def get_available_times(self, item_id: int) -> list:
+        now = datetime.now().replace(second=0, microsecond=0)
+        if now.minute % 30 != 0:
+            now += timedelta(minutes=30 - now.minute % 30)
+            
+        end_time = now + timedelta(days=7)
+        time_slots = []
+        
+        temp_time = now
+        while temp_time <= end_time:
+            time_slots.append(temp_time.strftime("%Y-%m-%d %H:%M"))
+            temp_time += timedelta(minutes=30)
+
+        sql = """
+        SELECT rental_start, rental_end
+        FROM rental_records
+        WHERE item_id = %s
+        AND rental_status != 3
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [item_id])
+            reserved_times = cursor.fetchall()
+
+        for rental_start, rental_end in reserved_times:
+            rental_start = rental_start.strftime("%Y-%m-%d %H:%M")
+            rental_end = rental_end.strftime("%Y-%m-%d %H:%M")
+            time_slots = [t for t in time_slots if not (rental_start <= t < rental_end)]
+
+        return time_slots
+
+    def get_available_time_ranges(self, item_id: int) -> list:
+        now = datetime.now().replace(second=0, microsecond=0)
+        if now.minute % 30 != 0:
+            now += timedelta(minutes=30 - now.minute % 30)
+
+        end_time = now + timedelta(days=7)
+
+        time_slots = []
+        temp_time = now
+        while temp_time <= end_time:
+            time_slots.append(temp_time)
+            temp_time += timedelta(minutes=30)
+
+        sql = """
+        SELECT rental_start, rental_end
+        FROM rental_records
+        WHERE item_id = %s
+        AND rental_status != 3
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [item_id])
+            reserved_times = cursor.fetchall()
+
+        for rental_start, rental_end in reserved_times:
+            rental_start = rental_start.replace(second=0, microsecond=0)
+            rental_end = rental_end.replace(second=0, microsecond=0)
+            time_slots = [t for t in time_slots if not (rental_start <= t < rental_end)]
+
+        available_ranges = []
+        if not time_slots:
+            return available_ranges
+
+        start_time = time_slots[0]
+        for i in range(1, len(time_slots)):
+            if (time_slots[i] - time_slots[i - 1]) != timedelta(minutes=30):
+                available_ranges.append({
+                    "start": start_time.strftime("%Y-%m-%d %H:%M"),
+                    "end": time_slots[i - 1].strftime("%Y-%m-%d %H:%M")
+                })
+                start_time = time_slots[i]
+
+        available_ranges.append({
+            "start": start_time.strftime("%Y-%m-%d %H:%M"),
+            "end": time_slots[-1].strftime("%Y-%m-%d %H:%M")
+        })
+
+        return available_ranges
+
     def reserve_item(self, user_id: int, item_id: int, rental_start: str, rental_end: str):
         sql = """
         INSERT INTO rental_records
         (user_id, item_id, rental_start, rental_end, actual_return, rental_status, pickup_image, return_image, created_at)
-        VALUES (%s, %s, %s, %s, null, 1, null, null, NOW())
+        VALUES (%s, %s, %s, %s, null, 1, null, null, NOW());
         """
         params = [user_id, item_id, rental_start, rental_end]
         with connection.cursor() as cursor:
@@ -167,6 +281,7 @@ class ItemRepository:
         LEFT JOIN item_images im ON im.item_id = i.item_id
         LEFT JOIN users u ON i.user_id = u.id
         WHERE r.user_id = %s
+        AND r.rental_status < 3
         """
 
         params = [user_id, user_id]
@@ -185,38 +300,24 @@ class ItemRepository:
         return [dict(zip(col_names, row)) for row in rows]
     
     
-    def pickup_item(self, user_id: int, item_id: int, pickup_time: str, image: str) -> dict | None:
-        find_sql = """
-        SELECT rental_start, rental_end
-        FROM reservations
-        WHERE user_id = %s
-          AND item_id = %s
-          AND status = 1
-        ORDER BY created_at DESC
-        LIMIT 1
+    def pickup_item(self, user_id: int, item_id: int, pickup_time: str, pickup_image: str) -> dict | None:
+        sql = """
+        update rental_records 
+        set rental_status = 2, 
+        pickup_image = %s,
+        pickup_time = %s
+        where item_id = %s
+        and rental_status = 1
+        and user_id = %s;
+        UPDATE items SET status = 2 where item_id = %s
         """
         with connection.cursor() as cursor:
-            cursor.execute(find_sql, [user_id, item_id])
-            row = cursor.fetchone()
-        if not row:
-            return None 
-        
-        rental_start, rental_end = row 
-
-        insert_sql = """
-        INSERT INTO rental_records
-        (user_id, item_id, rental_start, rental_end, rental_status, pickup_image, created_at)
-        VALUES (%s, %s, %s, %s, 'ON_RENT', %s, NOW())
-        RETURNING rental_id
-        """
-        params = [user_id, item_id, pickup_time, rental_end, image]
-        with connection.cursor() as cursor:
-            cursor.execute(insert_sql, params)
+            cursor.execute(sql, [pickup_image, pickup_time, item_id, user_id, item_id])
         return {
             "user_id": user_id,
             "item_id": item_id,
             "rental_start": pickup_time, 
-            "rental_end": str(rental_end), 
+            "rental_end": str(pickup_image), 
         }
     
 
@@ -230,7 +331,7 @@ class ItemRepository:
             i.item_name,
             i.item_description,
             COALESCE(ARRAY_AGG(im.image_url) FILTER (WHERE im.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls,
-            i.status AS item_status,   -- items 테이블의 status
+            i.status
             i.quantity,
             i.caution,
             r.rental_start,
@@ -240,7 +341,7 @@ class ItemRepository:
         JOIN groups g ON i.group_id = g.group_id
         LEFT JOIN item_images im ON im.item_id = i.item_id
         WHERE r.user_id = %s
-          AND r.rental_status = 'ON_RENT'
+        AND r.rental_status = '2'
         GROUP BY r.user_id, i.group_id, g.group_name, i.item_id, i.item_name, i.item_description, i.status, i.quantity, i.caution, r.rental_start, r.rental_end
         ORDER BY r.created_at DESC
         """
@@ -255,38 +356,23 @@ class ItemRepository:
         return result
     
     def return_item(self, user_id: int, item_id: int, return_time: str, return_image: str) -> dict | None:
-        find_sql = """
-        SELECT rental_id, rental_start, rental_end
-        FROM rental_records
-        WHERE user_id = %s
-          AND item_id = %s
-          AND rental_status = 'ON_RENT'
-        ORDER BY created_at DESC
-        LIMIT 1
+        sql = """
+        update rental_records 
+        set rental_status = 3, 
+        return_image = %s,
+        return_time = %s
+        where item_id = %s
+        and rental_status = 2
+        and user_id = %s;
+        UPDATE items SET status = 0 where item_id = %s
         """
         with connection.cursor() as cursor:
-            cursor.execute(find_sql, [user_id, item_id])
-            row = cursor.fetchone()
-        if not row:
-            return None 
-
-        rental_id, rental_start, rental_end = row
-
-        update_sql = """
-        UPDATE rental_records
-        SET actual_return = %s,
-            return_image  = %s,
-            rental_status = 'RETURNED'
-        WHERE rental_id = %s
-        """
-        with connection.cursor() as cursor:
-            cursor.execute(update_sql, [return_time, return_image, rental_id])
-
+            cursor.execute(sql, [return_image, return_time, item_id, user_id, item_id])
         return {
             "user_id": user_id,
             "item_id": item_id,
-            "rental_start": str(rental_start),
-            "rental_end": str(rental_end),
+            "rental_start": return_time, 
+            "rental_end": str(return_image), 
         }
     
 class WishlistRepository:

@@ -31,12 +31,13 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "apps.shared",
+    "sslserver",
 ]
 
 THIRD_PARTY = [
     "rest_framework",
-    "drf_spectacular",
     "rest_framework_simplejwt",
+    "drf_spectacular",
 ]
 
 OWN_APPS = [
@@ -69,19 +70,19 @@ MIDDLEWARE = [
 ROOT_URLCONF = "config.urls"
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
 CORS_ORIGIN_ALLOW_ALL = True
 
-# CORS_ALLOWED_ORIGINS = [
-#     "https://kauth.kakao.com",
-#     "http://127.0.0.1:8000",
-#     "http://localhost:8000",
-#     # "http://localhost:3000",
-#     # "https://weshare.com",
-#     "http://175.45.203.70:8000",
-#     "http://54.180.87.253",
-#     "http://54.180.87.253:80"
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "https://kauth.kakao.com",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    # "http://localhost:3000",
+    # "https://weshare.com",
+    "http://175.45.203.70:8000",
+    "http://54.180.87.253",
+    "http://54.180.87.253:80"
+]
 
 CORS_ALLOW_CREDENTIALS = True
 

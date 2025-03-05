@@ -39,7 +39,7 @@ def upload_to_ncp_storage(image):
     except Exception as e:
         print("실패: ", str(e))
 
-    # s3.upload_fileobj(image, bucket_name, file_name, ExtraArgs={"ACL": "public-read", "ContentType": content_type})
-    # s3.put_object_acl(ACL="public-read", Bucket=bucket_name, Key=file_name)
+    s3.upload_fileobj(image, bucket_name, file_name, ExtraArgs={"ACL": "public-read", "ContentType": content_type})
+    s3.put_object_acl(ACL="public-read", Bucket=bucket_name, Key=file_name)
 
     return f"{endpoint_url}/{bucket_name}/{file_name}"
