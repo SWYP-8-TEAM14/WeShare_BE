@@ -16,6 +16,7 @@ from config.settings.base import env
 
 from django.http import JsonResponse, HttpResponseRedirect
 import os
+from django.shortcuts import redirect
 
 class KakaoLoginView(APIView):
     permission_classes = [AllowAny]
@@ -129,20 +130,26 @@ class KakaoCallbackView(APIView):
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
 
-        response = HttpResponseRedirect(os.getenv("FRONTEND_REDIRECT_URI"))
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=False,
-            samesite="Lax",
-        )
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            httponly=True,
-            secure=False,
-            samesite="Lax",
-        )
+        # 토큰을 포함한 리디렉션 URL 생성
+        frontend_url = os.getenv("FRONTEND_REDIRECT_URI")
+        redirect_url = f"{frontend_url}?access_token={access_token}&refresh_token={refresh_token}"
 
-        return response
+        return redirect(redirect_url)
+
+
+        # response = HttpResponseRedirect(os.getenv("FRONTEND_REDIRECT_URI"))
+        # response.set_cookie(
+        #     key="access_token",
+        #     value=access_token,
+        #     httponly=True,
+        #     secure=False,
+        #     samesite="Lax",
+        # )
+        # response.set_cookie(
+        #     key="refresh_token",
+        #     value=refresh_token,
+        #     httponly=True,
+        #     secure=False,
+        #     samesite="Lax",
+        # )
+        # return response
