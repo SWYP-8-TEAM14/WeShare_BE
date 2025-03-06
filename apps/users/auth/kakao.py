@@ -76,15 +76,8 @@ class KakaoCallbackView(APIView):
             access_token = token_json.get("access_token")
         except requests.exceptions.JSONDecodeError:
             return Response(
-                {"error": "Failed to parse JSON", "details": token_response.text},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+                {"error": "Failed to parse JSON"}, status=400)
 
-        if not access_token:
-            return Response(
-                {"error": "Failed to get access token", "details": token_json},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
 
         # 사용자 정보 요청
         user_info_url = "https://kapi.kakao.com/v2/user/me"
@@ -132,10 +125,16 @@ class KakaoCallbackView(APIView):
 
         # 토큰을 포함한 리디렉션 URL 생성
         frontend_url = os.getenv("FRONTEND_REDIRECT_URI")
-        redirect_url = f"{frontend_url}?access_token={access_token}&refresh_token={refresh_token}"
 
-        return redirect(redirect_url)
-
+        if frontend_url:
+            redirect_url = f"{frontend_url}?access_token={access_token}&refresh_token={refresh_token}"
+            return redirect(redirect_url)
+        else:
+            return Response({
+                "refresh" : refresh_token,
+                "access" : access_token,
+                "email" : user.email,
+            })
 
         # response = HttpResponseRedirect(os.getenv("FRONTEND_REDIRECT_URI"))
         # response.set_cookie(
