@@ -6,7 +6,7 @@ User = get_user_model()
 
 class Group(models.Model):
     group_id = models.AutoField(primary_key=True)
-    group_admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name="group_admin")
+    group_admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name="admin_group")
     group_name = models.CharField(max_length=120)
     group_image = models.CharField(max_length=255, null=True, blank=True)
     group_description = models.TextField(null=True, blank=True)
