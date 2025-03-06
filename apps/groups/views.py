@@ -12,7 +12,7 @@ from .serializers import GroupSerializer, GroupCreateSerializer, GroupMemberSeri
 class GroupListView(generics.ListAPIView):
     """ 사용자가 가입한 그룹 목록 조회 """
     serializer_class = GroupSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @extend_schema(
         parameters=[
@@ -25,27 +25,13 @@ class GroupListView(generics.ListAPIView):
         ]
     )
     def get(self, request):
-        user = request.user
-
-        # 내가 가입한 그룹 가져오기
-        joined_groups = Group.objects.filter(members__user=user).annotate(member_count=Count("members"))
-
-        # 내가 만든 그룹 가져오기
-        created_groups = Group.objects.filter(group_admin=user).annotate(member_count=Count("members"))
-
-
-        # 내가 만든 그룹만 보기(created_by_me=true)
-        if request.GET.get("created_by_me") == "true":
-            queryset = list(created_groups)
-        else:
-            queryset = list(joined_groups) + list(created_groups)
-
-        # 정렬 옵션 적용
+        joined_groups = Group.objects.annotate(member_count=Count("members"))
         sort_option = request.GET.get("sort", "default")
+
         if sort_option == "members":
-            queryset.sort(key=lambda x: x.member_count, reverse=True)
+            queryset = joined_groups.order_by("-member_count")
         else:
-            queryset.sort(key=lambda x: x.created_at, reverse=True)
+            queryset = joined_groups.order_by("-created_at")
 
         data = GroupSerializer(queryset, many=True).data
         return Response(data, status=status.HTTP_200_OK)
@@ -167,8 +153,11 @@ class GroupCreateView(generics.CreateAPIView):
     permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
-        group = serializer.save(group_admin=self.request.user)
-        GroupMember.objects.create(group=group, user=self.request.user, is_admin=True)
+        serializer.is_valid(raise_exception=True)
+        group = serializer.save()
+        # group_admin 필드가 필요한 경우 request.user 대신 기본값 설정 필요
+        # ex) group_admin을 null 허용하거나, 임시 유저 설정 필요
+        GroupMember.objects.create(group=group, user=None, is_admin=True)
 
 
 # class GroupJoinView(generics.RetrieveUpdateDestroyAPIView):
