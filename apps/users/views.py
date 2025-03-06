@@ -16,12 +16,15 @@ class UserView(APIView):
     permission_classes = [IsAuthenticated]
 
     # 사용자 정보 조회를 처리하는 GET 메서드
-    def get(self, request: Request) -> Response:
-        if not request.user.is_authenticated:
-            return Response({"message": "User Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
-
-        serializer = UserUpdateSerializer(request.user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get(self, request):
+        user = request.user
+        # 사용자 프로필 정보 반환
+        return Response({
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+        })
 
     # 사용자 정보 수정을 처리하는 PUT 메서드
     def put(self, request: Request) -> Response:
