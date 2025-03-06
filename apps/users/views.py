@@ -4,8 +4,10 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import User
+from django.contrib.auth import get_user_model
 from .serializers import UserUpdateSerializer
+
+User = get_user_model()
 
 
 # 사용자 정보 조회 및 수정을 처리하는 API View
@@ -15,17 +17,11 @@ class UserView(APIView):
 
     # 사용자 정보 조회를 처리하는 GET 메서드
     def get(self, request: Request) -> Response:
-        try:
-            # 현재 로그인한 사용자 정보 조회
-            user = request.user
-            # 사용자 정보를 JSON으로 직렬화
-            serializer = UserUpdateSerializer(user)
-            # 직렬화된 데이터 반환
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        # 사용자를 찾을 수 없는 경우 처리
-        except User.DoesNotExist:
+        if not request.user.is_authenticated:
             return Response({"message": "User Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = UserUpdateSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     # 사용자 정보 수정을 처리하는 PUT 메서드
     def put(self, request: Request) -> Response:
