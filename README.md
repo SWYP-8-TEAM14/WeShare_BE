@@ -120,15 +120,16 @@ http://localhost:8000/api/docs/
 1. 가상환경 활성화 (Python 3.12 기준)
 ```
 pyenv activate weshare
-의존성 설치
+가상환경 활성화
 
 poetry install
-마이그레이션 적용
+의존성 설치
 
 python manage.py migrate
-개발 서버 실행
+마이그레이션 적용
 
 python manage.py runserver
+개발 서버 실행
 
 ```
 이후 브라우저에서 http://localhost:8000/api/docs/ 확인 가능
