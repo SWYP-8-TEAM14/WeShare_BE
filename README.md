@@ -58,20 +58,22 @@ ORM 기반 모델 설계와 Serializer를 활용한 데이터 직렬화 경험�
 - 그룹 생성 및 관리 (회사, 동아리 등)  
 - 그룹별 물품 CRUD 기능
 
-- <img width="181" height="389" alt="스크린샷 2026-01-10 오전 1 26 41" src="https://github.com/user-attachments/assets/b113c825-65b1-4806-9748-81c648dda8d0" />
-
+<img width="181" height="389" alt="스크린샷 2026-01-10 오전 1 26 41" src="https://github.com/user-attachments/assets/b113c825-65b1-4806-9748-81c648dda8d0" />
+-------
 
 ### 물품 관리
 - CRUD 기능 구현  
-- 그룹/개인 물품 구분 가능
-- 
+- 그룹/개인 물품 구분 가능 
 <img width="602" height="835" alt="스크린샷 2025-08-15 오전 1 42 12" src="https://github.com/user-attachments/assets/303e9d82-1827-49ac-b404-93164eb60aba" />
 
+-------
 ### 대여 관리
 - 대여 신청 및 상태 관리 (대기, 승인, 반납)
 - 
 <img width="604" height="835" alt="스크린샷 2025-08-15 오전 1 26 52" src="https://github.com/user-attachments/assets/df8e260f-f7f4-4393-9262-4a49a6b7c7f2" />
+
 <img width="604" height="833" alt="스크린샷 2025-08-15 오전 1 27 19" src="https://github.com/user-attachments/assets/48f13e2a-6f83-47fa-b30a-bed608c29204" />
+
 <img width="177" height="422" alt="스크린샷 2026-01-10 오전 1 26 07" src="https://github.com/user-attachments/assets/48a50011-67c4-4df6-95f2-c5bc9061640a" />
 
 
